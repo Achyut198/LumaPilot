@@ -33,11 +33,23 @@ Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
 ## 🔐 Gatekeeper & Safety
 
-If macOS shows **"Apple could not verify ... malware"**, the app is not notarized yet.
-To avoid this for users, releases should be:
-1. Signed with **Developer ID Application** certificate
-2. Notarized with Apple `notarytool`
-3. Stapled (`xcrun stapler staple`) before publishing
+Current public build is unsigned, so macOS may show:
+**"Apple could not verify 'LumaPilot' is free of malware..."**
+
+If that happens, install safely with:
+1. Right click `LumaPilot.app` in Applications
+2. Click `Open`
+3. Click `Open` again in the security prompt
+
+Fallback terminal method:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/LumaPilot.app
+open /Applications/LumaPilot.app
+```
+
+If needed, you can also allow it from:
+`System Settings -> Privacy & Security -> Open Anyway`.
 
 This repository includes:
 - `scripts/macos_notarized_release.sh` for local notarized DMG builds
