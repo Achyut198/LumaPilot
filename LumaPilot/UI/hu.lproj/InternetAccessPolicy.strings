@@ -1,0 +1,8 @@
+/* General application description */
+"ApplicationDescription" = "A LumaPilot a külső kijelző fényerejének és hangerejének beállítását teszi lehetővé";
+
+/* Sofware update deny consequences */
+"SoftwareUpdateDenyConsequences" = "Ha elutasítja ezeket a kapcsolatokat, nem értesül új verziókról és biztonsági frissítésekről. A biztonsági frissítések fontosak a rosszindulatú támadások elhárítása érdekében.";
+
+/* Software update purpose */
+"SoftwareUpdatePurpose" = "A LumaPilot ellenőrzi új verziók és biztonsági frissítések meglétét.";
