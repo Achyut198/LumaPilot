@@ -4,9 +4,9 @@
   <p><b>Controls your external display brightness and volume and shows native OSD.</b></p>
   <p>Use menubar extra sliders or the keyboard, and turn off / turn on displays (internal and external monitor feature).</p>
   
-  <a href="https://github.com/LumaPilot/LumaPilot/releases"><img src="https://img.shields.io/github/downloads/LumaPilot/LumaPilot/total.svg" alt="downloads"/></a>
-  <a href="https://github.com/LumaPilot/LumaPilot/releases"><img src="https://img.shields.io/github/release-pre/LumaPilot/LumaPilot.svg" alt="latest version"/></a>
-  <a href="https://github.com/LumaPilot/LumaPilot/blob/master/License.txt"><img src="https://img.shields.io/github/license/LumaPilot/LumaPilot.svg" alt="license"/></a>
+  <a href="https://github.com/Achyut198/LumaPilot/releases"><img src="https://img.shields.io/github/downloads/Achyut198/LumaPilot/total.svg" alt="downloads"/></a>
+  <a href="https://github.com/Achyut198/LumaPilot/releases"><img src="https://img.shields.io/github/release-pre/Achyut198/LumaPilot.svg" alt="latest version"/></a>
+  <a href="https://github.com/Achyut198/LumaPilot/blob/main/License.txt"><img src="https://img.shields.io/github/license/Achyut198/LumaPilot.svg" alt="license"/></a>
 </div>
 
 <hr>
@@ -23,13 +23,12 @@
 
 ## 💾 Installation
 
-You can install LumaPilot via Homebrew:
+Download the latest DMG:
 
-```shell
-brew install --cask lumapilot
-```
+- [LumaPilot v0.1.0 DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg)
+- [SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg.sha256)
 
-*Alternatively, download the latest `.dmg` from [GitHub Releases](https://github.com/LumaPilot/LumaPilot/releases) and move it to your Applications folder.*
+Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
 ## 🛠 Usage Instructions
 
@@ -49,7 +48,7 @@ brew install --cask lumapilot
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/LumaPilot/LumaPilot.git
+   git clone https://github.com/Achyut198/LumaPilot.git
    ```
 2. **Open the project:** Open `LumaPilot.xcodeproj` in Xcode.
 3. **Build:** Dependencies resolve automatically via Swift Package Manager.
