@@ -21,6 +21,16 @@
 * **Smooth Transitions**: Enjoy fluid, smooth brightness adjustments.
 * **Custom Shortcuts**: Set up custom keyboard combos simply from the settings.
 
+## 📸 Screenshots
+
+### Menu UI
+
+<img src="docs/screenshots/menu-ui.png" width="420" alt="LumaPilot menu UI screenshot"/>
+
+### General Settings
+
+<img src="docs/screenshots/settings-general.png" width="900" alt="LumaPilot general settings screenshot"/>
+
 ## 💾 Installation
 
 Download from Releases:
