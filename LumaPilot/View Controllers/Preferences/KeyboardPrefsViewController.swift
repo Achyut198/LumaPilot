@@ -45,6 +45,7 @@ class KeyboardPrefsViewController: NSViewController, SettingsPane {
   @IBOutlet var rowCustomAudioShortcuts: NSGridRow!
   @IBOutlet var rowUseAudioMouseText: NSGridRow!
   @IBOutlet var rowUseAudioNameText: NSGridRow!
+  private var displayShortcutRowsAdded = false
 
   func updateGridLayout() {
     if self.keyboardBrightness.selectedTag() == KeyboardBrightness.media.rawValue {
@@ -140,8 +141,57 @@ class KeyboardPrefsViewController: NSViewController, SettingsPane {
     self.customVolumeUp.addSubview(customVolumeUpRecorder)
     self.customVolumeDown.addSubview(customVolumeDownRecorder)
     self.customMute.addSubview(customMuteRecorder)
+    self.setupDisplayShortcutRecorders()
 
     self.populateSettings()
+  }
+
+  private func makeDisplayShortcutLabel(_ title: String) -> NSTextField {
+    let label = NSTextField(labelWithString: title)
+    label.alignment = .right
+    label.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    return label
+  }
+
+  private func makeDisplayShortcutContainer() -> NSView {
+    let container = NSView(frame: NSRect(x: 0, y: 0, width: 100, height: 25))
+    container.translatesAutoresizingMaskIntoConstraints = false
+    container.widthAnchor.constraint(equalToConstant: 100).isActive = true
+    container.heightAnchor.constraint(equalToConstant: 25).isActive = true
+    return container
+  }
+
+  private func setupDisplayShortcutRecorders() {
+    guard !self.displayShortcutRowsAdded, let audioShortcutsGrid = self.customMute.superview as? NSGridView else {
+      return
+    }
+
+    let displayOffRecorder = KeyboardShortcuts.RecorderCocoa(for: .displayOff)
+    displayOffRecorder.placeholderString = NSLocalizedString("Display Off", comment: "Shown in record shortcut box")
+    let displayOffContainer = self.makeDisplayShortcutContainer()
+    displayOffContainer.addSubview(displayOffRecorder)
+    audioShortcutsGrid.addRow(with: [self.makeDisplayShortcutLabel(NSLocalizedString("Display off:", comment: "Shown in keyboard preferences")), displayOffContainer, NSView()])
+
+    let displayOnRecorder = KeyboardShortcuts.RecorderCocoa(for: .displayOn)
+    displayOnRecorder.placeholderString = NSLocalizedString("Display On", comment: "Shown in record shortcut box")
+    let displayOnContainer = self.makeDisplayShortcutContainer()
+    displayOnContainer.addSubview(displayOnRecorder)
+    audioShortcutsGrid.addRow(with: [self.makeDisplayShortcutLabel(NSLocalizedString("Display on:", comment: "Shown in keyboard preferences")), displayOnContainer, NSView()])
+
+    for rowIndex in max(0, audioShortcutsGrid.numberOfRows - 2) ..< audioShortcutsGrid.numberOfRows {
+      audioShortcutsGrid.row(at: rowIndex).topPadding = 2
+      audioShortcutsGrid.row(at: rowIndex).bottomPadding = 0
+    }
+
+    if let shortcutsBox = audioShortcutsGrid.superview as? NSBox {
+      if let heightConstraint = shortcutsBox.constraints.first(where: { $0.firstAttribute == .height && $0.relation == .equal }) {
+        heightConstraint.constant += 48
+      } else {
+        shortcutsBox.heightAnchor.constraint(equalToConstant: shortcutsBox.frame.height + 48).isActive = true
+      }
+    }
+
+    self.displayShortcutRowsAdded = true
   }
 
   func populateSettings() {

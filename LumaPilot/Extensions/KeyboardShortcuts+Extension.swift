@@ -10,6 +10,8 @@ extension KeyboardShortcuts.Name {
   static let volumeUp = Self("volumeUp")
   static let volumeDown = Self("volumeDown")
   static let mute = Self("mute")
+  static let displayOff = Self("displayOff")
+  static let displayOn = Self("displayOn")
 
   static let none = Self("none")
 }

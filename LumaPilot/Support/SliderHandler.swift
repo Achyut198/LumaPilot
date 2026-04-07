@@ -2,6 +2,7 @@
 
 import Cocoa
 import os.log
+import SimplyCoreAudio
 
 class SliderHandler {
   var slider: MCSlider?
@@ -13,16 +14,43 @@ class SliderHandler {
   let command: Command
   var icon: ClickThroughImageView?
 
+  static func canControlSystemOutputVolume() -> Bool {
+    guard let defaultAudioDevice = app.coreAudio.defaultOutputDevice else {
+      return false
+    }
+    return defaultAudioDevice.canSetVirtualMainVolume(scope: .output)
+  }
+
+  private func getSystemOutputVolume() -> Float? {
+    guard let defaultAudioDevice = app.coreAudio.defaultOutputDevice else {
+      return nil
+    }
+    guard defaultAudioDevice.canSetVirtualMainVolume(scope: .output), let volume = defaultAudioDevice.virtualMainVolume(scope: .output) else {
+      return nil
+    }
+    return max(0, min(1, volume))
+  }
+
+  private func setSystemOutputVolume(_ value: Float) {
+    guard let defaultAudioDevice = app.coreAudio.defaultOutputDevice else {
+      return
+    }
+    guard defaultAudioDevice.canSetVirtualMainVolume(scope: .output) else {
+      return
+    }
+    _ = defaultAudioDevice.setVirtualMainVolume(max(0, min(1, value)), scope: .output)
+  }
+
   class MCSliderCell: NSSliderCell {
-    let knobFillColor = NSColor(calibratedRed: 0.15, green: 0.92, blue: 0.84, alpha: 1)
-    let knobFillColorTracking = NSColor(calibratedRed: 0.10, green: 0.78, blue: 0.70, alpha: 1)
-    let knobStrokeColor = NSColor(calibratedRed: 0.00, green: 0.30, blue: 0.34, alpha: 0.55)
-    let knobShadowColor = NSColor(calibratedRed: 0.00, green: 0.02, blue: 0.07, alpha: 0.09)
-    let barFillColor = NSColor(calibratedRed: 0.14, green: 0.18, blue: 0.28, alpha: 0.92)
-    let barStrokeColor = NSColor(calibratedRed: 0.32, green: 0.38, blue: 0.55, alpha: 0.45)
-    let barFilledFillColor = NSColor(calibratedRed: 0.08, green: 0.70, blue: 0.95, alpha: 1)
-    let highlightDisplayIndicatorColor = NSColor(calibratedRed: 1.00, green: 0.66, blue: 0.25, alpha: 1) // This is visible if there is more the 2 displays
-    let tickMarkColor = NSColor(calibratedRed: 0.55, green: 0.90, blue: 1.00, alpha: 0.6)
+    let knobFillColor = NSColor(calibratedRed: 0.76, green: 0.82, blue: 0.90, alpha: 1)
+    let knobFillColorTracking = NSColor(calibratedRed: 0.66, green: 0.74, blue: 0.86, alpha: 1)
+    let knobStrokeColor = NSColor(calibratedRed: 0.19, green: 0.25, blue: 0.34, alpha: 0.60)
+    let knobShadowColor = NSColor(calibratedRed: 0.00, green: 0.00, blue: 0.00, alpha: 0.10)
+    let barFillColor = NSColor(calibratedRed: 0.17, green: 0.20, blue: 0.26, alpha: 0.95)
+    let barStrokeColor = NSColor(calibratedRed: 0.32, green: 0.37, blue: 0.47, alpha: 0.55)
+    let barFilledFillColor = NSColor(calibratedRed: 0.29, green: 0.48, blue: 0.74, alpha: 1)
+    let highlightDisplayIndicatorColor = NSColor(calibratedRed: 0.88, green: 0.62, blue: 0.28, alpha: 1) // This is visible if there is more the 2 displays
+    let tickMarkColor = NSColor(calibratedRed: 0.56, green: 0.66, blue: 0.82, alpha: 0.55)
 
     let inset: CGFloat = 3.5
     let offsetX: CGFloat = -1.5
@@ -218,9 +246,14 @@ class SliderHandler {
     slider.setNumOfCustomTickmarks(prefs.bool(forKey: PrefKey.showTickMarks.rawValue) ? 5 : 0)
     self.slider = slider
     if !DEBUG_MACOS10, #available(macOS 11.0, *) {
-      slider.frame.size.width = 180
-      slider.frame.origin = NSPoint(x: 15, y: 5)
-      let view = NSView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + 30 + (showPercent ? 38 : 0), height: slider.frame.height + 14))
+      let iconSize: CGFloat = 15
+      let iconLeftPadding: CGFloat = 12
+      let iconToSliderSpacing: CGFloat = 8
+      let sliderLeftPadding = iconLeftPadding + iconSize + iconToSliderSpacing
+      let sliderRightPadding: CGFloat = 15
+      slider.frame.size.width = 210 - sliderLeftPadding - sliderRightPadding
+      slider.frame.origin = NSPoint(x: sliderLeftPadding, y: 5)
+      let view = NSView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + sliderLeftPadding + sliderRightPadding + (showPercent ? 38 : 0), height: slider.frame.height + 14))
       view.frame.origin = NSPoint(x: 12, y: 0)
       var iconName = "circle.dashed"
       switch command {
@@ -231,8 +264,8 @@ class SliderHandler {
       }
       let icon = SliderHandler.ClickThroughImageView()
       icon.image = NSImage(systemSymbolName: iconName, accessibilityDescription: title)
-      icon.contentTintColor = NSColor(calibratedRed: 0.47, green: 0.84, blue: 1.0, alpha: 0.95)
-      icon.frame = NSRect(x: view.frame.origin.x + 6.5, y: view.frame.origin.y + 13, width: 15, height: 15)
+      icon.contentTintColor = NSColor(calibratedRed: 0.69, green: 0.78, blue: 0.90, alpha: 0.95)
+      icon.frame = NSRect(x: iconLeftPadding, y: 13, width: iconSize, height: iconSize)
       icon.imageAlignment = .alignCenter
       view.addSubview(slider)
       view.addSubview(icon)
@@ -271,6 +304,8 @@ class SliderHandler {
     } else if let appleDisplay = display as? AppleDisplay {
       if self.command == .brightness {
         self.setValue(appleDisplay.getAppleBrightness(), displayID: appleDisplay.identifier)
+      } else if self.command == .audioSpeakerVolume, appleDisplay.isBuiltIn(), let volume = self.getSystemOutputVolume() {
+        self.setValue(volume, displayID: appleDisplay.identifier)
       }
     }
   }
@@ -282,7 +317,7 @@ class SliderHandler {
     percentageBox.drawsBackground = false
     percentageBox.alignment = .right
     percentageBox.alphaValue = 0.95
-    percentageBox.textColor = NSColor(calibratedRed: 0.72, green: 0.93, blue: 1.0, alpha: 1)
+    percentageBox.textColor = NSColor(calibratedRed: 0.72, green: 0.79, blue: 0.89, alpha: 1)
   }
 
   func valueChangedOtherDisplay(otherDisplay: OtherDisplay, value: Float) {
@@ -328,6 +363,8 @@ class SliderHandler {
       slider.setHighlightItem(display.identifier, value: value)
       if self.command == .brightness, let appleDisplay = display as? AppleDisplay {
         _ = appleDisplay.setBrightness(value)
+      } else if self.command == .audioSpeakerVolume, let appleDisplay = display as? AppleDisplay, appleDisplay.isBuiltIn() {
+        self.setSystemOutputVolume(value)
       } else if let otherDisplay = display as? OtherDisplay {
         self.valueChangedOtherDisplay(otherDisplay: otherDisplay, value: value)
       }

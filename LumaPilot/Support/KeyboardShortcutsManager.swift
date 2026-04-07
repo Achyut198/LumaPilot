@@ -36,6 +36,12 @@ class KeyboardShortcutsManager {
     KeyboardShortcuts.onKeyDown(for: .mute) { [self] in
       self.mute()
     }
+    KeyboardShortcuts.onKeyDown(for: .displayOff) { [self] in
+      self.displayPower(enable: false)
+    }
+    KeyboardShortcuts.onKeyDown(for: .displayOn) { [self] in
+      self.displayPower(enable: true)
+    }
     KeyboardShortcuts.onKeyUp(for: .brightnessUp) { [self] in
       self.disengage()
     }
@@ -166,6 +172,48 @@ class KeyboardShortcutsManager {
           wasNotIsPressedVolumeSentAlready = true
         }
       }
+    }
+  }
+
+  private func preferredDisplayIDForDisable() -> CGDirectDisplayID? {
+    if let currentDisplay = DisplayManager.shared.getCurrentDisplay(), DisplayManager.shared.canDisableDisplay(currentDisplay.identifier) {
+      return currentDisplay.identifier
+    }
+    if let externalDisplay = DisplayManager.shared.getAllDisplays().first(where: { !$0.isBuiltIn() && DisplayManager.shared.canDisableDisplay($0.identifier) }) {
+      return externalDisplay.identifier
+    }
+    if let builtInDisplay = DisplayManager.shared.getBuiltInDisplay(), DisplayManager.shared.canDisableDisplay(builtInDisplay.identifier) {
+      return builtInDisplay.identifier
+    }
+    return nil
+  }
+
+  private func displayPower(enable: Bool) {
+    guard app.sleepID == 0, app.reconfigureID == 0 else {
+      return
+    }
+
+    if enable {
+      guard let disabledDisplay = DisplayManager.shared.getKnownDisabledDisplays().first else {
+        return
+      }
+      let result = DisplayManager.shared.setDisplayEnabled(disabledDisplay.id, enabled: true)
+      if !result.success {
+        os_log("Display on shortcut failed: %{public}@", type: .error, result.error ?? "Unknown error")
+      } else {
+        app.updateMenusAndKeys()
+      }
+      return
+    }
+
+    guard let displayID = self.preferredDisplayIDForDisable() else {
+      return
+    }
+    let result = DisplayManager.shared.setDisplayEnabled(displayID, enabled: false)
+    if !result.success {
+      os_log("Display off shortcut failed: %{public}@", type: .error, result.error ?? "Unknown error")
+    } else {
+      app.updateMenusAndKeys()
     }
   }
 }

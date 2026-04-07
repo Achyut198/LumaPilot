@@ -6,3 +6,4 @@ Carthage
 
 ### Xcode ###
 xcuserdata/
+/build

@@ -298,8 +298,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func setStartAtLogin(enabled: Bool) {
-    let identifier = "\(Bundle.main.bundleIdentifier!)Helper" as CFString
-    SMLoginItemSetEnabled(identifier, enabled)
+    guard #available(macOS 13.0, *) else {
+      os_log("Start at login is unsupported on this macOS version.", type: .info)
+      return
+    }
+
+    do {
+      if enabled {
+        try SMAppService.mainApp.register()
+      } else {
+        try SMAppService.mainApp.unregister()
+      }
+      os_log("Start at login updated to %{public}@", type: .info, String(enabled))
+    } catch {
+      os_log("Failed to update start at login: %{public}@", type: .error, error.localizedDescription)
+    }
+  }
+
+  func isStartAtLoginEnabled() -> Bool {
+    guard #available(macOS 13.0, *) else {
+      return false
+    }
+    return SMAppService.mainApp.status == .enabled
   }
 
   func getSystemSettings() -> [String: AnyObject]? {

@@ -54,25 +54,9 @@
 		F01B069F228221B7008E64DB /* SliderHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01B068F228221B7008E64DB /* SliderHandler.swift */; };
 		F03A8DF21FFBAA6F0034DC27 /* OtherDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03A8DF11FFBAA6F0034DC27 /* OtherDisplay.swift */; };
 		F0445D3820023E710025AE82 /* MainPrefsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0445D3720023E710025AE82 /* MainPrefsViewController.swift */; };
-		F06792EA200A73460066C438 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06792E9200A73460066C438 /* main.swift */; };
-		F06792F6200A745F0066C438 /* LumaPilotHelper.app in [Login] Copy Helper to start at Login */ = {isa = PBXBuildFile; fileRef = F06792E7200A73460066C438 /* LumaPilotHelper.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F0A489C4279C71B200BEDFD6 /* OnboardingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A489C3279C71B200BEDFD6 /* OnboardingViewController.swift */; };
 		FE4E0896249D584C003A50BB /* OSDUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4E0895249D584C003A50BB /* OSDUtils.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		F06792F5200A73FA0066C438 /* [Login] Copy Helper to start at Login */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = Contents/Library/LoginItems;
-			dstSubfolderSpec = 1;
-			files = (
-				F06792F6200A745F0066C438 /* LumaPilotHelper.app in [Login] Copy Helper to start at Login */,
-			);
-			name = "[Login] Copy Helper to start at Login";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		01D6471D2AF916A800321FFB /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Main.strings; sourceTree = "<group>"; };
@@ -172,10 +156,6 @@
 		F01B068F228221B7008E64DB /* SliderHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SliderHandler.swift; sourceTree = "<group>"; };
 		F03A8DF11FFBAA6F0034DC27 /* OtherDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherDisplay.swift; sourceTree = "<group>"; };
 		F0445D3720023E710025AE82 /* MainPrefsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainPrefsViewController.swift; sourceTree = "<group>"; };
-		F06792E7200A73460066C438 /* LumaPilotHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LumaPilotHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F06792E9200A73460066C438 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		F06792F0200A73470066C438 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F06792F1200A73470066C438 /* LumaPilotHelper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LumaPilotHelper.entitlements; sourceTree = "<group>"; };
 		F0A489C3279C71B200BEDFD6 /* OnboardingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewController.swift; sourceTree = "<group>"; };
 		FB5DB28E2AD54C4600306223 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Main.strings"; sourceTree = "<group>"; };
 		FB5DB28F2AD54C4600306223 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InternetAccessPolicy.strings"; sourceTree = "<group>"; };
@@ -196,13 +176,6 @@
 				AA9AE86F26B5BF3D00B6CA65 /* OSD.framework in Frameworks */,
 				AAD7DD342CAFF3D90062822F /* Settings in Frameworks */,
 				AADB625A26BC196900DFFAA5 /* DisplayServices.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F06792E4200A73460066C438 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,7 +209,6 @@
 				AAB2F646273ED127004AB5A4 /* Misc */,
 				28D1DDD1227FB759004CB494 /* Frameworks */,
 				56754EAD1D9A4016007BCDC5 /* LumaPilot */,
-				F06792E8200A73460066C438 /* LumaPilotHelper */,
 				56754EAC1D9A4016007BCDC5 /* Products */,
 			);
 			indentWidth = 2;
@@ -246,7 +218,6 @@
 			isa = PBXGroup;
 			children = (
 				56754EAB1D9A4016007BCDC5 /* LumaPilot.app */,
-				F06792E7200A73460066C438 /* LumaPilotHelper.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -340,16 +311,6 @@
 			path = "View Controllers";
 			sourceTree = "<group>";
 		};
-		F06792E8200A73460066C438 /* LumaPilotHelper */ = {
-			isa = PBXGroup;
-			children = (
-				F06792F0200A73470066C438 /* Info.plist */,
-				F06792E9200A73460066C438 /* main.swift */,
-				F06792F1200A73470066C438 /* LumaPilotHelper.entitlements */,
-			);
-			path = LumaPilotHelper;
-			sourceTree = "<group>";
-		};
 		F0A489C1279C718400BEDFD6 /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
@@ -384,7 +345,6 @@
 				56754EA71D9A4016007BCDC5 /* Sources */,
 				56754EA81D9A4016007BCDC5 /* Frameworks */,
 				56754EA91D9A4016007BCDC5 /* Resources */,
-				F06792F5200A73FA0066C438 /* [Login] Copy Helper to start at Login */,
 			);
 			buildRules = (
 			);
@@ -402,25 +362,6 @@
 			productReference = 56754EAB1D9A4016007BCDC5 /* LumaPilot.app */;
 			productType = "com.apple.product-type.application";
 		};
-		F06792E6200A73460066C438 /* LumaPilotHelper */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F06792F4200A73470066C438 /* Build configuration list for PBXNativeTarget "LumaPilotHelper" */;
-			buildPhases = (
-				F06792E3200A73460066C438 /* Sources */,
-				F06792E4200A73460066C438 /* Frameworks */,
-				F06792E5200A73460066C438 /* Resources */,
-				28F6A5802283515F00A4ADCD /* Increase Build Number */,
-				28F6A5822283548F00A4ADCD /* Sync Version Numbers */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = LumaPilotHelper;
-			productName = LumaPilotHelper;
-			productReference = F06792E7200A73460066C438 /* LumaPilotHelper.app */;
-			productType = "com.apple.product-type.application";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -434,11 +375,6 @@
 				TargetAttributes = {
 					56754EAA1D9A4016007BCDC5 = {
 						CreatedOnToolsVersion = 8.0;
-						LastSwiftMigration = 1020;
-						ProvisioningStyle = Automatic;
-					};
-					F06792E6200A73460066C438 = {
-						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1020;
 						ProvisioningStyle = Automatic;
 					};
@@ -481,10 +417,9 @@
 			productRefGroup = 56754EAC1D9A4016007BCDC5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (
-				56754EAA1D9A4016007BCDC5 /* LumaPilot */,
-				F06792E6200A73460066C438 /* LumaPilotHelper */,
-			);
+				targets = (
+					56754EAA1D9A4016007BCDC5 /* LumaPilot */,
+				);
 		};
 /* End PBXProject section */
 
@@ -493,27 +428,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AAB2F642273ED0C7004AB5A4 /* .github in Resources */,
-				AAB2F63E273ED0AD004AB5A4 /* .swiftformat in Resources */,
 				56754EB11D9A4016007BCDC5 /* Assets.xcassets in Resources */,
 				6CDA0FCF26485A8300F52125 /* Main.storyboard in Resources */,
-				AAB2F640273ED0B8004AB5A4 /* .bartycrouch.toml in Resources */,
 				8C1741852707B91100E88D53 /* InternetAccessPolicy.plist in Resources */,
-				AAB2F638273ED099004AB5A4 /* .swiftlint.yml in Resources */,
-				AAB2F63C273ED0AD004AB5A4 /* .swift-version in Resources */,
-				AA3B4A2826AE103C00B74CD2 /* README.md in Resources */,
 				F01B0699228221B7008E64DB /* Localizable.strings in Resources */,
-				AAB2F63D273ED0AD004AB5A4 /* .gitignore in Resources */,
 				8C1741882707B91F00E88D53 /* InternetAccessPolicy.strings in Resources */,
-				AAB2F644273ED0E9004AB5A4 /* License.txt in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F06792E5200A73460066C438 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				28D1DDF3227FC8C6004CB494 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -538,44 +457,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\nif which swiftformat >/dev/null; then\n  swiftformat .\nelse\n  echo \"warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat\" >&2\nfi\n";
-		};
-		28F6A5802283515F00A4ADCD /* Increase Build Number */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Increase Build Number";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "/bin/bash -euo pipefail";
-			shellScript = "files_have_changed() {\n  test -n \"$(find \"${1}\" ! -path '*xcuserdata*' ! -path '*.git' ! -path '*.git/*' -newer \"${2}\")\"\n}\n\nif files_have_changed \"${PROJECT_DIR}\" \"${INFOPLIST_FILE}\"; then\n  build_number=\"$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${INFOPLIST_FILE}\")\"\n  new_build_number=\"$((build_number + 1))\"\n\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${new_build_number}\" \"${INFOPLIST_FILE/Helper/}\"\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${new_build_number}\" \"${INFOPLIST_FILE}\"\nfi\n";
-		};
-		28F6A5822283548F00A4ADCD /* Sync Version Numbers */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Sync Version Numbers";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "/bin/bash -euo pipefail";
-			shellScript = "version_number=\"$(/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \"${INFOPLIST_FILE/Helper/}\")\"\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${version_number}\" \"${INFOPLIST_FILE/Helper/}\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${version_number}\" \"${INFOPLIST_FILE}\"\n";
 		};
 		6CB1BDB2253C7EBE00B52124 /* [Localization] Run BartyCrouch */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -645,14 +526,6 @@
 				AA25F6CF26E680510087F3A2 /* MenuslidersPrefsViewController.swift in Sources */,
 				AA4398A926DD55DA00943F16 /* IntelDDC.swift in Sources */,
 				6C85EFDA22C941B000227EA1 /* DisplayManager.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F06792E3200A73460066C438 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F06792EA200A73460066C438 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -932,68 +805,6 @@
 			};
 			name = Release;
 		};
-		F06792F2200A73470066C438 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = LumaPilotHelper/LumaPilotHelper.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7100;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
-				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				INFOPLIST_FILE = LumaPilotHelper/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 4.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.lumapilot.LumaPilotHelper;
-				PRODUCT_NAME = LumaPilotHelper;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.5;
-			};
-			name = Debug;
-		};
-		F06792F3200A73470066C438 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = LumaPilotHelper/LumaPilotHelper.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7100;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 299YSU96J7;
-				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				INFOPLIST_FILE = LumaPilotHelper/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 4.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.lumapilot.LumaPilotHelper;
-				PRODUCT_NAME = LumaPilotHelper;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.5;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1015,15 +826,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F06792F4200A73470066C438 /* Build configuration list for PBXNativeTarget "LumaPilotHelper" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F06792F2200A73470066C438 /* Debug */,
-				F06792F3200A73470066C438 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -1037,7 +839,7 @@
 		};
 		6CD35F5426500008001F1344 /* XCRemoteSwiftPackageReference "MediaKeyTap" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/LumaPilot/MediaKeyTap";
+			repositoryURL = "https://github.com/MonitorControl/MediaKeyTap";
 			requirement = {
 				branch = master;
 				kind = branch;

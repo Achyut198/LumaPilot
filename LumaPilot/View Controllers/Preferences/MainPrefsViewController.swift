@@ -2,7 +2,6 @@
 
 import Cocoa
 import os.log
-import ServiceManagement
 import Settings
 
 class MainPrefsViewController: NSViewController, SettingsPane {
@@ -52,9 +51,15 @@ class MainPrefsViewController: NSViewController, SettingsPane {
 
   @available(macOS, deprecated: 10.10)
   func populateSettings() {
-    // This is marked as deprectated but according to the function header it still does not have a replacement as of macOS 12 Monterey and is valid to use.
-    let startAtLogin = (SMCopyAllJobDictionaries(kSMDomainUserLaunchd).takeRetainedValue() as? [[String: AnyObject]])?.first { $0["Label"] as? String == "\(Bundle.main.bundleIdentifier!)Helper" }?["OnDemand"] as? Bool ?? false
-    self.startAtLogin.state = startAtLogin ? .on : .off
+    if #available(macOS 13.0, *) {
+      self.startAtLogin.state = app.isStartAtLoginEnabled() ? .on : .off
+      self.startAtLogin.isEnabled = true
+      self.startAtLogin.toolTip = nil
+    } else {
+      self.startAtLogin.state = .off
+      self.startAtLogin.isEnabled = false
+      self.startAtLogin.toolTip = NSLocalizedString("Start at login requires macOS 13 or newer.", comment: "Shown in preferences")
+    }
     self.automaticUpdateCheck.state = prefs.bool(forKey: PrefKey.SUEnableAutomaticChecks.rawValue) ? .on : .off
     self.combinedBrightness.state = prefs.bool(forKey: PrefKey.disableCombinedBrightness.rawValue) ? .off : .on
     self.allowZeroSwBrightness.state = prefs.bool(forKey: PrefKey.allowZeroSwBrightness.rawValue) ? .on : .off

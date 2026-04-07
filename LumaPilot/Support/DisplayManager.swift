@@ -371,27 +371,34 @@ class DisplayManager {
     }
     let configureDisplayEnabled = unsafeBitCast(configureDisplayEnabledSymbol, to: CGSConfigureDisplayEnabledFunction.self)
 
-    var displayConfigRef: CGDisplayConfigRef?
-    let beginResult = CGBeginDisplayConfiguration(&displayConfigRef)
-    guard beginResult == .success else {
-      return (false, "CGBeginDisplayConfiguration failed (\(beginResult.rawValue)).")
-    }
+    var lastCompleteError: CGError?
+    for option in [CGConfigureOption.permanently, CGConfigureOption.forSession] {
+      var displayConfigRef: CGDisplayConfigRef?
+      let beginResult = CGBeginDisplayConfiguration(&displayConfigRef)
+      guard beginResult == .success else {
+        return (false, "CGBeginDisplayConfiguration failed (\(beginResult.rawValue)).")
+      }
 
-    let configureResult = configureDisplayEnabled(displayConfigRef, displayID, enabled)
-    guard configureResult == 0 else {
+      let configureResult = configureDisplayEnabled(displayConfigRef, displayID, enabled)
+      guard configureResult == 0 else {
+        CGCancelDisplayConfiguration(displayConfigRef)
+        return (false, "CGSConfigureDisplayEnabled failed (\(configureResult)).")
+      }
+
+      let completeResult = CGCompleteDisplayConfiguration(displayConfigRef, option)
+      if completeResult == .success {
+        if enabled {
+          self.knownDisplays[displayID] = DisplayManager.getDisplayNameByID(displayID: displayID)
+        }
+        return (true, nil)
+      }
+
+      lastCompleteError = completeResult
       CGCancelDisplayConfiguration(displayConfigRef)
-      return (false, "CGSConfigureDisplayEnabled failed (\(configureResult)).")
+      os_log("CGCompleteDisplayConfiguration failed for option %{public}@ (%{public}d)", type: .error, option == .permanently ? "permanently" : "forSession", completeResult.rawValue)
     }
 
-    let completeResult = CGCompleteDisplayConfiguration(displayConfigRef, CGConfigureOption.permanently)
-    guard completeResult == .success else {
-      return (false, "CGCompleteDisplayConfiguration failed (\(completeResult.rawValue)).")
-    }
-
-    if enabled {
-      self.knownDisplays[displayID] = DisplayManager.getDisplayNameByID(displayID: displayID)
-    }
-    return (true, nil)
+    return (false, String(format: NSLocalizedString("Display reconfiguration failed (%d). Try changing arrangement in System Settings > Displays, then retry.", comment: "Shown in the alert dialog"), lastCompleteError?.rawValue ?? -1))
   }
   
   func addDisplayCounterSuffixes() {

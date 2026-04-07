@@ -5,7 +5,7 @@ import os.log
 
 class MenuHandler: NSMenu, NSMenuDelegate {
   var combinedSliderHandler: [Command: SliderHandler] = [:]
-  var displayToggleSwitches: [CGDirectDisplayID: NSSwitch] = [:]
+  var displayToggleSwitches: [CGDirectDisplayID: NSControl] = [:]
 
   var lastMenuRelevantDisplayId: CGDirectDisplayID = 0
 
@@ -180,7 +180,8 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     let monitorSubMenu: NSMenu = asSubMenu ? NSMenu() : self
     var addedSliderHandlers: [SliderHandler] = []
     display.sliderHandler[.audioSpeakerVolume] = nil
-    if let otherDisplay = display as? OtherDisplay, !otherDisplay.isSw(), !display.readPrefAsBool(key: .unavailableDDC, for: .audioSpeakerVolume), !prefs.bool(forKey: PrefKey.hideVolume.rawValue) {
+    let shouldShowBuiltInVolumeSlider = (display as? AppleDisplay)?.isBuiltIn() == true && SliderHandler.canControlSystemOutputVolume()
+    if !prefs.bool(forKey: PrefKey.hideVolume.rawValue), ((display as? OtherDisplay).map({ !$0.isSw() && !display.readPrefAsBool(key: .unavailableDDC, for: .audioSpeakerVolume) }) == true || shouldShowBuiltInVolumeSlider) {
       let title = NSLocalizedString("Volume", comment: "Shown in menu")
       addedSliderHandlers.append(self.setupMenuSliderHandler(command: .audioSpeakerVolume, display: display, title: title))
     }
@@ -211,33 +212,54 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       return
     }
 
-    let itemView = NSView(frame: NSRect(x: 0, y: 0, width: 252, height: 34))
+    let itemView = NSView(frame: NSRect(x: 0, y: 0, width: 252, height: 36))
     itemView.wantsLayer = true
-    itemView.layer?.cornerRadius = 9
-    itemView.layer?.backgroundColor = NSColor(calibratedRed: 0.08, green: 0.20, blue: 0.33, alpha: 0.72).cgColor
-    itemView.layer?.borderColor = NSColor(calibratedRed: 0.28, green: 0.66, blue: 0.99, alpha: 0.65).cgColor
+    itemView.layer?.cornerRadius = 10
+    itemView.layer?.backgroundColor = NSColor(calibratedRed: 0.10, green: 0.13, blue: 0.18, alpha: 0.90).cgColor
+    itemView.layer?.borderColor = NSColor(calibratedRed: 0.34, green: 0.42, blue: 0.54, alpha: 0.62).cgColor
     itemView.layer?.borderWidth = 1
 
-    let iconView = NSImageView(frame: NSRect(x: 14, y: 10, width: 14, height: 14))
-    iconView.image = NSImage(systemSymbolName: CGDisplayIsBuiltin(display.identifier) != 0 ? "laptopcomputer" : "display", accessibilityDescription: friendlyName)
-    iconView.contentTintColor = NSColor(calibratedRed: 0.73, green: 0.93, blue: 1.00, alpha: 1)
+    let iconView = NSImageView(frame: NSRect(x: 14, y: 11, width: 14, height: 14))
+    if #available(macOS 11.0, *) {
+      iconView.image = NSImage(systemSymbolName: CGDisplayIsBuiltin(display.identifier) != 0 ? "laptopcomputer" : "display", accessibilityDescription: friendlyName)
+    } else {
+      iconView.image = NSImage(named: NSImage.preferencesGeneralName)
+    }
+    iconView.contentTintColor = NSColor(calibratedRed: 0.74, green: 0.80, blue: 0.90, alpha: 1)
     iconView.imageScaling = .scaleProportionallyUpOrDown
     itemView.addSubview(iconView)
 
     let titleField = NSTextField(labelWithString: friendlyName)
-    titleField.frame = NSRect(x: 35, y: 8, width: 150, height: 18)
+    titleField.frame = NSRect(x: 35, y: 9, width: 150, height: 18)
     titleField.font = NSFont.boldSystemFont(ofSize: 12)
-    titleField.textColor = NSColor(calibratedRed: 0.88, green: 0.96, blue: 1.00, alpha: 1)
+    titleField.textColor = NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.97, alpha: 1)
     itemView.addSubview(titleField)
 
-    let displaySwitch = NSSwitch(frame: NSRect(x: 194, y: 6, width: 50, height: 22))
-    displaySwitch.state = DisplayManager.shared.isDisplayActive(display.identifier) ? .on : .off
-    displaySwitch.target = self
-    displaySwitch.action = #selector(self.displayEnabledToggleChanged(_:))
-    displaySwitch.tag = Int(display.identifier)
-    displaySwitch.toolTip = NSLocalizedString("Toggle display connection", comment: "Shown in menu")
-    itemView.addSubview(displaySwitch)
-    self.displayToggleSwitches[display.identifier] = displaySwitch
+    let displayID = DisplayManager.resolveEffectiveDisplayID(display.identifier)
+    let initialState: NSControl.StateValue = DisplayManager.shared.isDisplayActive(displayID) ? .on : .off
+    if #available(macOS 10.15, *) {
+      let displaySwitch = NSSwitch(frame: NSRect(x: 202, y: 9, width: 32, height: 16))
+      displaySwitch.controlSize = .small
+      displaySwitch.state = initialState
+      displaySwitch.target = self
+      displaySwitch.action = #selector(self.displayEnabledToggleChanged(_:))
+      displaySwitch.tag = Int(displayID)
+      displaySwitch.toolTip = NSLocalizedString("Toggle display connection", comment: "Shown in menu")
+      itemView.addSubview(displaySwitch)
+      self.displayToggleSwitches[display.identifier] = displaySwitch
+    } else {
+      let displaySwitch = NSButton(frame: NSRect(x: 204, y: 10, width: 36, height: 14))
+      displaySwitch.setButtonType(.switch)
+      displaySwitch.title = ""
+      displaySwitch.isBordered = false
+      displaySwitch.state = initialState
+      displaySwitch.target = self
+      displaySwitch.action = #selector(self.displayEnabledToggleChanged(_:))
+      displaySwitch.tag = Int(displayID)
+      displaySwitch.toolTip = NSLocalizedString("Toggle display connection", comment: "Shown in menu")
+      itemView.addSubview(displaySwitch)
+      self.displayToggleSwitches[display.identifier] = displaySwitch
+    }
 
     monitorMenuItem.view = itemView
     self.insertItem(monitorMenuItem, at: 0)
@@ -254,6 +276,59 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     }
   }
 
+  private func addDisabledDisplayToggleRow(displayID: CGDirectDisplayID, name: String) {
+    let monitorMenuItem = NSMenuItem()
+    let itemView = NSView(frame: NSRect(x: 0, y: 0, width: 252, height: 36))
+    itemView.wantsLayer = true
+    itemView.layer?.cornerRadius = 10
+    itemView.layer?.backgroundColor = NSColor(calibratedRed: 0.10, green: 0.13, blue: 0.18, alpha: 0.55).cgColor
+    itemView.layer?.borderColor = NSColor(calibratedRed: 0.32, green: 0.35, blue: 0.41, alpha: 0.60).cgColor
+    itemView.layer?.borderWidth = 1
+
+    let iconView = NSImageView(frame: NSRect(x: 14, y: 11, width: 14, height: 14))
+    if #available(macOS 11.0, *) {
+      iconView.image = NSImage(systemSymbolName: "display", accessibilityDescription: name)
+    } else {
+      iconView.image = NSImage(named: NSImage.preferencesGeneralName)
+    }
+    iconView.contentTintColor = NSColor(calibratedWhite: 0.73, alpha: 0.90)
+    iconView.imageScaling = .scaleProportionallyUpOrDown
+    itemView.addSubview(iconView)
+
+    let titleField = NSTextField(labelWithString: name)
+    titleField.frame = NSRect(x: 35, y: 9, width: 150, height: 18)
+    titleField.font = NSFont.boldSystemFont(ofSize: 12)
+    titleField.textColor = NSColor(calibratedWhite: 0.80, alpha: 0.95)
+    itemView.addSubview(titleField)
+
+    if #available(macOS 10.15, *) {
+      let displaySwitch = NSSwitch(frame: NSRect(x: 202, y: 9, width: 32, height: 16))
+      displaySwitch.controlSize = .small
+      displaySwitch.state = .off
+      displaySwitch.target = self
+      displaySwitch.action = #selector(self.displayEnabledToggleChanged(_:))
+      displaySwitch.tag = Int(displayID)
+      displaySwitch.toolTip = NSLocalizedString("Toggle display connection", comment: "Shown in menu")
+      itemView.addSubview(displaySwitch)
+      self.displayToggleSwitches[displayID] = displaySwitch
+    } else {
+      let displaySwitch = NSButton(frame: NSRect(x: 204, y: 10, width: 36, height: 14))
+      displaySwitch.setButtonType(.switch)
+      displaySwitch.title = ""
+      displaySwitch.isBordered = false
+      displaySwitch.state = .off
+      displaySwitch.target = self
+      displaySwitch.action = #selector(self.displayEnabledToggleChanged(_:))
+      displaySwitch.tag = Int(displayID)
+      displaySwitch.toolTip = NSLocalizedString("Toggle display connection", comment: "Shown in menu")
+      itemView.addSubview(displaySwitch)
+      self.displayToggleSwitches[displayID] = displaySwitch
+    }
+
+    monitorMenuItem.view = itemView
+    self.insertItem(monitorMenuItem, at: 0)
+  }
+
   private func shouldShowDisableDisplayWarning() -> Bool {
     !prefs.bool(forKey: PrefKey.skipDisableDisplayWarning.rawValue)
   }
@@ -262,13 +337,68 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     guard self.shouldShowDisableDisplayWarning() else {
       return true
     }
+
+    let contentWidth: CGFloat = 304
+    let makeParagraphLabel: (String, CGFloat, NSFont) -> NSTextField = { text, height, font in
+      let label = NSTextField(wrappingLabelWithString: text)
+      label.frame = NSRect(x: 0, y: 0, width: contentWidth, height: height)
+      label.preferredMaxLayoutWidth = contentWidth
+      label.font = font
+      label.textColor = NSColor.labelColor
+      label.alignment = .center
+      label.lineBreakMode = .byWordWrapping
+      return label
+    }
+
+    let stack = NSStackView()
+    stack.orientation = .vertical
+    stack.alignment = .centerX
+    stack.distribution = .fill
+    stack.spacing = 9
+    stack.edgeInsets = NSEdgeInsets(top: 4, left: 0, bottom: 2, right: 0)
+
+    if #available(macOS 10.15, *) {
+      let iconView = NSImageView(frame: NSRect(x: 0, y: 0, width: 20, height: 20))
+      if #available(macOS 11.0, *) {
+        iconView.image = NSImage(systemSymbolName: "display.trianglebadge.exclamationmark", accessibilityDescription: "Display warning")
+      } else {
+        iconView.image = NSImage(named: NSImage.cautionName)
+      }
+      iconView.imageScaling = .scaleProportionallyUpOrDown
+      iconView.contentTintColor = NSColor.systemBlue
+      stack.addArrangedSubview(iconView)
+    }
+
+    stack.addArrangedSubview(makeParagraphLabel(
+      String(format: NSLocalizedString("This should remove \"%@\" from the display layout and make it enter standby mode.", comment: "Shown in the alert dialog"), displayName),
+      44,
+      NSFont.systemFont(ofSize: 13, weight: .medium)
+    ))
+    stack.addArrangedSubview(makeParagraphLabel(
+      NSLocalizedString("Some displays are not compatible with this feature and may not turn off or remain off.", comment: "Shown in the alert dialog"),
+      40,
+      NSFont.systemFont(ofSize: 12.5)
+    ))
+    stack.addArrangedSubview(makeParagraphLabel(
+      NSLocalizedString("If you cannot turn the display back on using the app, reconnect it manually. For a MacBook display, close and open the lid.", comment: "Shown in the alert dialog"),
+      50,
+      NSFont.systemFont(ofSize: 12.5)
+    ))
+
+    let accessoryContainer = NSView(frame: NSRect(x: 0, y: 0, width: contentWidth, height: 158))
+    stack.frame = accessoryContainer.bounds
+    stack.autoresizingMask = [.width, .height]
+    accessoryContainer.addSubview(stack)
+
     let alert = NSAlert()
-    alert.messageText = NSLocalizedString("Disconnect display?", comment: "Shown in the alert dialog")
-    alert.informativeText = String(format: NSLocalizedString("This will disconnect \"%@\" from the active display layout. Use the menu action to reconnect it later.", comment: "Shown in the alert dialog"), displayName)
+    alert.messageText = NSLocalizedString("Disconnecting a Display", comment: "Shown in the alert dialog")
+    alert.informativeText = ""
     alert.alertStyle = .warning
+    alert.accessoryView = accessoryContainer
     alert.addButton(withTitle: NSLocalizedString("Disconnect", comment: "Shown in the alert dialog"))
     alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Shown in the alert dialog"))
     alert.showsSuppressionButton = true
+    alert.suppressionButton?.title = NSLocalizedString("Don't show this warning again!", comment: "Shown in the alert dialog")
     let response = alert.runModal()
     if alert.suppressionButton?.state == .on {
       prefs.set(true, forKey: PrefKey.skipDisableDisplayWarning.rawValue)
@@ -276,13 +406,16 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     return response == .alertFirstButtonReturn
   }
 
-  @objc private func displayEnabledToggleChanged(_ sender: NSSwitch) {
+  @objc private func displayEnabledToggleChanged(_ sender: NSControl) {
     let displayID = CGDirectDisplayID(sender.tag)
-    let shouldEnable = sender.state == .on
+    let shouldEnable = sender.intValue == 1
+    let setSenderState: (NSControl.StateValue) -> Void = { newState in
+      sender.intValue = (newState == .on) ? 1 : 0
+    }
 
     if !shouldEnable {
       guard DisplayManager.shared.canDisableDisplay(displayID) else {
-        sender.state = .on
+        setSenderState(.on)
         let alert = NSAlert()
         alert.messageText = NSLocalizedString("Display cannot be disconnected", comment: "Shown in the alert dialog")
         alert.informativeText = NSLocalizedString("At least one display must stay enabled.", comment: "Shown in the alert dialog")
@@ -292,18 +425,20 @@ class MenuHandler: NSMenu, NSMenuDelegate {
 
       let displayName = DisplayManager.shared.knownDisplays[displayID] ?? String(displayID)
       guard self.showDisableDisplayWarning(for: displayName) else {
-        sender.state = .on
+        setSenderState(.on)
         return
       }
     }
 
     let result = DisplayManager.shared.setDisplayEnabled(displayID, enabled: shouldEnable)
     if !result.success {
-      sender.state = shouldEnable ? .off : .on
+      setSenderState(shouldEnable ? .off : .on)
       let alert = NSAlert()
       alert.messageText = NSLocalizedString("Display toggle failed", comment: "Shown in the alert dialog")
       alert.informativeText = result.error ?? NSLocalizedString("Unknown error.", comment: "Shown in the alert dialog")
       alert.runModal()
+    } else {
+      self.updateMenus(dontClose: true)
     }
   }
 
@@ -320,15 +455,8 @@ class MenuHandler: NSMenu, NSMenuDelegate {
   func addDefaultMenuOptions() {
     let disabledDisplays = DisplayManager.shared.getKnownDisabledDisplays()
     if !disabledDisplays.isEmpty {
-      if app.macOS10() {
-        self.insertItem(NSMenuItem.separator(), at: self.items.count)
-      }
       for disabledDisplay in disabledDisplays {
-        let reconnectTitle = String(format: NSLocalizedString("Reconnect %@", comment: "Shown in menu"), disabledDisplay.name)
-        let reconnectItem = NSMenuItem(title: reconnectTitle, action: #selector(self.reconnectDisplayMenuClicked(_:)), keyEquivalent: "")
-        reconnectItem.target = self
-        reconnectItem.tag = Int(disabledDisplay.id)
-        self.insertItem(reconnectItem, at: self.items.count)
+        self.addDisabledDisplayToggleRow(displayID: disabledDisplay.id, name: disabledDisplay.name)
       }
     }
 
@@ -385,6 +513,11 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       let item = NSMenuItem()
       item.view = menuItemView
       self.insertItem(item, at: self.items.count)
+
+      self.insertItem(NSMenuItem.separator(), at: self.items.count)
+      let quitItem = NSMenuItem(title: NSLocalizedString("Quit LumaPilot", comment: "Shown in menu"), action: #selector(app.quitClicked), keyEquivalent: "q")
+      quitItem.target = app
+      self.insertItem(quitItem, at: self.items.count)
     } else if prefs.integer(forKey: PrefKey.menuItemStyle.rawValue) != MenuItemStyle.hide.rawValue {
       if app.macOS10() {
         self.insertItem(NSMenuItem.separator(), at: self.items.count)

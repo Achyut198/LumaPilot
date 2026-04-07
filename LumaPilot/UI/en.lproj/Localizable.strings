@@ -164,6 +164,9 @@
 "Disconnect display?" = "Disconnect display?";
 
 /* Shown in the alert dialog */
+"Disconnecting a Display" = "Disconnecting a Display";
+
+/* Shown in the alert dialog */
 "Display cannot be disconnected" = "Display cannot be disconnected";
 
 /* Shown in the alert dialog */
@@ -181,8 +184,38 @@
 /* Shown in the alert dialog */
 "This will disconnect \"%@\" from the active display layout. Use the menu action to reconnect it later." = "This will disconnect \"%@\" from the active display layout. Use the menu action to reconnect it later.";
 
+/* Shown in the alert dialog */
+"This should remove \"%@\" from the display layout and make it enter standby mode." = "This should remove \"%@\" from the display layout and make it enter standby mode.";
+
+/* Shown in the alert dialog */
+"Some displays are not compatible with this feature and may not turn off or remain off." = "Some displays are not compatible with this feature and may not turn off or remain off.";
+
+/* Shown in the alert dialog */
+"If you cannot turn the display back on using the app, reconnect it manually. For a MacBook display, close and open the lid." = "If you cannot turn the display back on using the app, reconnect it manually. For a MacBook display, close and open the lid.";
+
 /* Shown in menu */
 "Toggle display connection" = "Toggle display connection";
 
 /* Shown in the alert dialog */
+"Don't show this warning again!" = "Don't show this warning again!";
+
+/* Shown in the alert dialog */
 "Unknown error." = "Unknown error.";
+
+/* Shown in preferences */
+"Start at login is currently unavailable in this build." = "Start at login is currently unavailable in this build.";
+
+/* Shown in preferences */
+"Start at login requires macOS 13 or newer." = "Start at login requires macOS 13 or newer.";
+
+/* Shown in record shortcut box */
+"Display Off" = "Display Off";
+
+/* Shown in record shortcut box */
+"Display On" = "Display On";
+
+/* Shown in keyboard preferences */
+"Display off:" = "Display off:";
+
+/* Shown in keyboard preferences */
+"Display on:" = "Display on:";
