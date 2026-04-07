@@ -98,28 +98,6 @@ This repository includes:
 * Supports most modern external LCD displays (USB-C, DisplayPort, HDMI) using the standard DDC/CI protocol, alongside built-in Apple displays.
 * DisplayLink, Airplay, and Sidecar supported via shade control.
 
-## 🏗 Developer & Build Setup
-
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/Achyut198/LumaPilot.git
-   ```
-2. **Open the project:** Open `LumaPilot.xcodeproj` in Xcode.
-3. **Build:** Dependencies resolve automatically via Swift Package Manager.
-
-### Notarized Release (Maintainers)
-
-Set these GitHub Actions secrets:
-- `BUILD_CERTIFICATE_BASE64` (Developer ID Application .p12, base64 encoded)
-- `P12_PASSWORD`
-- `KEYCHAIN_PASSWORD`
-- `APPLE_ID`
-- `APPLE_TEAM_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-- `DEVELOPER_ID_APP_IDENTITY` (exact `codesign` identity string)
-
-Then push a tag like `v4.3.3`; the workflow will build, notarize, staple, and upload `.dmg` + `.sha256` to the matching GitHub Release.
-
 ## 📄 Credits
 
 Built and maintained by the **LumaPilot team**. Please see `License.txt` for details.
