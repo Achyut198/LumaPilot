@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=".github/Icon-cropped.png" width="200" alt="LumaPilot App icon"/>
+  <img src="LumaPilot/Assets.xcassets/AppIcon.appiconset/Icon-1024.png" width="200" alt="LumaPilot App icon"/>
   <h1>LumaPilot</h1>
   <p><b>Controls your external display brightness and volume and shows native OSD.</b></p>
   <p>Use menubar extra sliders or the keyboard, and turn off / turn on displays (internal and external monitor feature).</p>
