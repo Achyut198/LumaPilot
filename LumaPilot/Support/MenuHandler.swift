@@ -3,6 +3,16 @@
 import AppKit
 import os.log
 
+private class ResolutionMenuItemPayload: NSObject {
+  let displayID: CGDirectDisplayID
+  let ioDisplayModeID: Int32
+
+  init(displayID: CGDirectDisplayID, ioDisplayModeID: Int32) {
+    self.displayID = displayID
+    self.ioDisplayModeID = ioDisplayModeID
+  }
+}
+
 class MenuHandler: NSMenu, NSMenuDelegate {
   var combinedSliderHandler: [Command: SliderHandler] = [:]
   var displayToggleSwitches: [CGDirectDisplayID: NSControl] = [:]
@@ -195,12 +205,122 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       let title = NSLocalizedString("Brightness", comment: "Shown in menu")
       addedSliderHandlers.append(self.setupMenuSliderHandler(command: .brightness, display: display, title: title))
     }
+    self.addResolutionMenu(for: display, in: monitorSubMenu)
     if prefs.integer(forKey: PrefKey.multiSliders.rawValue) != MultiSliders.combine.rawValue {
       self.addDisplayMenuBlock(display: display, addedSliderHandlers: addedSliderHandlers, blockName: display.readPrefAsString(key: .friendlyName) != "" ? display.readPrefAsString(key: .friendlyName) : display.name, monitorSubMenu: monitorSubMenu, numOfDisplays: numOfDisplays, asSubMenu: asSubMenu)
     }
     if addedSliderHandlers.count > 0, prefs.integer(forKey: PrefKey.menuIcon.rawValue) == MenuIcon.sliderOnly.rawValue {
       app.updateStatusItemVisibility(true)
     }
+  }
+
+  private func addResolutionMenu(for display: Display, in monitorSubMenu: NSMenu) {
+    let displayID = DisplayManager.resolveEffectiveDisplayID(display.identifier)
+    let options = [kCGDisplayShowDuplicateLowResolutionModes: true] as CFDictionary
+    guard let modesRef = CGDisplayCopyAllDisplayModes(displayID, options) else {
+      return
+    }
+    guard let allModes = modesRef as? [CGDisplayMode] else {
+      return
+    }
+    let modes = allModes.filter { $0.isUsableForDesktopGUI() }
+    guard modes.count > 1 else {
+      return
+    }
+
+    var uniqueModesById: [Int32: CGDisplayMode] = [:]
+    for mode in modes where uniqueModesById[mode.ioDisplayModeID] == nil {
+      uniqueModesById[mode.ioDisplayModeID] = mode
+    }
+    let uniqueModes = uniqueModesById.values.sorted { lhs, rhs in
+      let lhsPixels = lhs.width * lhs.height
+      let rhsPixels = rhs.width * rhs.height
+      if lhsPixels != rhsPixels {
+        return lhsPixels > rhsPixels
+      }
+      if lhs.width != rhs.width {
+        return lhs.width > rhs.width
+      }
+      if lhs.height != rhs.height {
+        return lhs.height > rhs.height
+      }
+      return lhs.refreshRate > rhs.refreshRate
+    }
+    guard uniqueModes.count > 1 else {
+      return
+    }
+
+    let currentModeID = CGDisplayCopyDisplayMode(displayID)?.ioDisplayModeID
+    let defaultModeID = DisplayManager.shared.defaultDisplayModeID(for: displayID)
+    let resolutionMenu = NSMenu()
+
+    let resetResolutionItem = NSMenuItem(
+      title: NSLocalizedString("Reset to Default", comment: "Shown in menu"),
+      action: #selector(self.displayResolutionResetSelected(_:)),
+      keyEquivalent: ""
+    )
+    resetResolutionItem.target = self
+    resetResolutionItem.tag = Int(displayID)
+    resetResolutionItem.isEnabled = defaultModeID != nil && currentModeID != defaultModeID
+    resolutionMenu.addItem(resetResolutionItem)
+    resolutionMenu.addItem(NSMenuItem.separator())
+
+    for mode in uniqueModes {
+      let modeItem = NSMenuItem(
+        title: self.resolutionMenuTitle(for: mode, isDefault: mode.ioDisplayModeID == defaultModeID),
+        action: #selector(self.displayResolutionSelected(_:)),
+        keyEquivalent: ""
+      )
+      modeItem.target = self
+      modeItem.representedObject = ResolutionMenuItemPayload(displayID: displayID, ioDisplayModeID: mode.ioDisplayModeID)
+      modeItem.state = (mode.ioDisplayModeID == currentModeID) ? .on : .off
+      resolutionMenu.addItem(modeItem)
+    }
+
+    let resolutionParentItem = NSMenuItem(
+      title: NSLocalizedString("Resolution", comment: "Shown in menu"),
+      action: nil,
+      keyEquivalent: ""
+    )
+    resolutionParentItem.submenu = resolutionMenu
+    monitorSubMenu.insertItem(resolutionParentItem, at: 0)
+  }
+
+  private func resolutionMenuTitle(for mode: CGDisplayMode, isDefault: Bool) -> String {
+    let refreshRate = mode.refreshRate
+    let suffix = isDefault ? " (\(NSLocalizedString("Default", comment: "Shown in menu")))" : ""
+    if refreshRate > 1 {
+      return "\(mode.width)x\(mode.height) @ \(Int(round(refreshRate)))Hz\(suffix)"
+    }
+    return "\(mode.width)x\(mode.height)\(suffix)"
+  }
+
+  @objc private func displayResolutionSelected(_ sender: NSMenuItem) {
+    guard let payload = sender.representedObject as? ResolutionMenuItemPayload else {
+      return
+    }
+    let result = DisplayManager.shared.setDisplayResolution(payload.displayID, ioDisplayModeID: payload.ioDisplayModeID)
+    if !result.success {
+      let alert = NSAlert()
+      alert.messageText = NSLocalizedString("Resolution change failed", comment: "Shown in the alert dialog")
+      alert.informativeText = result.error ?? NSLocalizedString("Unknown error.", comment: "Shown in the alert dialog")
+      alert.runModal()
+      return
+    }
+    self.updateMenus(dontClose: true)
+  }
+
+  @objc private func displayResolutionResetSelected(_ sender: NSMenuItem) {
+    let displayID = CGDirectDisplayID(sender.tag)
+    let result = DisplayManager.shared.resetDisplayResolutionToDefault(displayID)
+    if !result.success {
+      let alert = NSAlert()
+      alert.messageText = NSLocalizedString("Resolution reset failed", comment: "Shown in the alert dialog")
+      alert.informativeText = result.error ?? NSLocalizedString("Unknown error.", comment: "Shown in the alert dialog")
+      alert.runModal()
+      return
+    }
+    self.updateMenus(dontClose: true)
   }
 
   private func appendMenuHeader(display: Display, friendlyName: String, monitorSubMenu: NSMenu, asSubMenu: Bool, numOfDisplays _: Int) {

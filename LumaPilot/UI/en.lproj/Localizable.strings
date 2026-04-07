@@ -196,11 +196,35 @@
 /* Shown in menu */
 "Toggle display connection" = "Toggle display connection";
 
+/* Shown in menu */
+"Resolution" = "Resolution";
+
+/* Shown in menu */
+"Default" = "Default";
+
+/* Shown in menu */
+"Reset to Default" = "Reset to Default";
+
 /* Shown in the alert dialog */
 "Don't show this warning again!" = "Don't show this warning again!";
 
 /* Shown in the alert dialog */
 "Unknown error." = "Unknown error.";
+
+/* Shown in the alert dialog */
+"Resolution change failed" = "Resolution change failed";
+
+/* Shown in the alert dialog */
+"Resolution reset failed" = "Resolution reset failed";
+
+/* Shown in the alert dialog */
+"Unable to read available resolutions for this display." = "Unable to read available resolutions for this display.";
+
+/* Shown in the alert dialog */
+"Selected resolution is no longer available." = "Selected resolution is no longer available.";
+
+/* Shown in the alert dialog */
+"Display mode change failed (%d)." = "Display mode change failed (%d).";
 
 /* Shown in preferences */
 "Start at login is currently unavailable in this build." = "Start at login is currently unavailable in this build.";

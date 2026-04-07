@@ -271,6 +271,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   func settingsReset() {
     os_log("Resetting all settings.")
+    DisplayManager.shared.resetAllDisplayResolutionsToDefault()
     if !prefs.bool(forKey: PrefKey.disableCombinedBrightness.rawValue) {
       DisplayManager.shared.resetSwBrightnessForAllDisplays(async: false)
     }

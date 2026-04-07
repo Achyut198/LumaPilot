@@ -400,6 +400,99 @@ class DisplayManager {
 
     return (false, String(format: NSLocalizedString("Display reconfiguration failed (%d). Try changing arrangement in System Settings > Displays, then retry.", comment: "Shown in the alert dialog"), lastCompleteError?.rawValue ?? -1))
   }
+
+  func setDisplayResolution(_ displayID: CGDirectDisplayID, ioDisplayModeID: Int32) -> (success: Bool, error: String?) {
+    let effectiveDisplayID = DisplayManager.resolveEffectiveDisplayID(displayID)
+    let options = [kCGDisplayShowDuplicateLowResolutionModes: true] as CFDictionary
+    guard let allModesRef = CGDisplayCopyAllDisplayModes(effectiveDisplayID, options) else {
+      return (false, NSLocalizedString("Unable to read available resolutions for this display.", comment: "Shown in the alert dialog"))
+    }
+    guard let allModes = allModesRef as? [CGDisplayMode] else {
+      return (false, NSLocalizedString("Unable to read available resolutions for this display.", comment: "Shown in the alert dialog"))
+    }
+    guard let selectedMode = allModes.first(where: { $0.ioDisplayModeID == ioDisplayModeID && $0.isUsableForDesktopGUI() }) else {
+      return (false, NSLocalizedString("Selected resolution is no longer available.", comment: "Shown in the alert dialog"))
+    }
+
+    if let currentMode = CGDisplayCopyDisplayMode(effectiveDisplayID), currentMode.ioDisplayModeID == selectedMode.ioDisplayModeID {
+      return (true, nil)
+    }
+
+    var lastCompleteError: CGError?
+    for option in [CGConfigureOption.permanently, CGConfigureOption.forSession] {
+      var displayConfigRef: CGDisplayConfigRef?
+      let beginResult = CGBeginDisplayConfiguration(&displayConfigRef)
+      guard beginResult == .success else {
+        return (false, "CGBeginDisplayConfiguration failed (\(beginResult.rawValue)).")
+      }
+
+      let configureResult = CGConfigureDisplayWithDisplayMode(displayConfigRef, effectiveDisplayID, selectedMode, nil)
+      guard configureResult == .success else {
+        CGCancelDisplayConfiguration(displayConfigRef)
+        return (false, "CGConfigureDisplayWithDisplayMode failed (\(configureResult.rawValue)).")
+      }
+
+      let completeResult = CGCompleteDisplayConfiguration(displayConfigRef, option)
+      if completeResult == .success {
+        return (true, nil)
+      }
+
+      lastCompleteError = completeResult
+      CGCancelDisplayConfiguration(displayConfigRef)
+      os_log("CGCompleteDisplayConfiguration for display mode failed for option %{public}@ (%{public}d)", type: .error, option == .permanently ? "permanently" : "forSession", completeResult.rawValue)
+    }
+
+    return (false, String(format: NSLocalizedString("Display mode change failed (%d).", comment: "Shown in the alert dialog"), lastCompleteError?.rawValue ?? -1))
+  }
+
+  private func usableDisplayModes(for displayID: CGDirectDisplayID) -> [CGDisplayMode] {
+    let effectiveDisplayID = DisplayManager.resolveEffectiveDisplayID(displayID)
+    let options = [kCGDisplayShowDuplicateLowResolutionModes: true] as CFDictionary
+    guard let modesRef = CGDisplayCopyAllDisplayModes(effectiveDisplayID, options), let allModes = modesRef as? [CGDisplayMode] else {
+      return []
+    }
+    return allModes.filter { $0.isUsableForDesktopGUI() }
+  }
+
+  func defaultDisplayModeID(for displayID: CGDirectDisplayID) -> Int32? {
+    let modes = self.usableDisplayModes(for: displayID)
+    guard !modes.isEmpty else {
+      return nil
+    }
+    if let nativeMode = modes.first(where: { ($0.ioFlags & UInt32(kDisplayModeNativeFlag)) != 0 }) {
+      return nativeMode.ioDisplayModeID
+    }
+    let sortedModes = modes.sorted { lhs, rhs in
+      let lhsPixels = lhs.pixelWidth * lhs.pixelHeight
+      let rhsPixels = rhs.pixelWidth * rhs.pixelHeight
+      if lhsPixels != rhsPixels {
+        return lhsPixels > rhsPixels
+      }
+      return lhs.refreshRate > rhs.refreshRate
+    }
+    return sortedModes.first?.ioDisplayModeID
+  }
+
+  func resetDisplayResolutionToDefault(_ displayID: CGDirectDisplayID) -> (success: Bool, error: String?) {
+    guard let defaultModeID = self.defaultDisplayModeID(for: displayID) else {
+      return (false, NSLocalizedString("Unable to read available resolutions for this display.", comment: "Shown in the alert dialog"))
+    }
+    return self.setDisplayResolution(displayID, ioDisplayModeID: defaultModeID)
+  }
+
+  func resetAllDisplayResolutionsToDefault() {
+    for displayID in self.getActiveDisplayIDs() {
+      let result = self.resetDisplayResolutionToDefault(displayID)
+      if !result.success {
+        os_log(
+          "Failed to reset display %{public}@ to default resolution: %{public}@",
+          type: .error,
+          String(displayID),
+          result.error ?? "unknown error"
+        )
+      }
+    }
+  }
   
   func addDisplayCounterSuffixes() {
     var nameDisplays: [String: [Display]] = [:]

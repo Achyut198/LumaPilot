@@ -419,6 +419,15 @@ class DisplaysPrefsCellView: NSTableCellView {
       self.friendlyNameValueChanged(self.friendlyName)
       self.enabledButton.state = .on
       self.enabledButtonToggled(self.enabledButton)
+      let resolutionResetResult = DisplayManager.shared.resetDisplayResolutionToDefault(disp.identifier)
+      if !resolutionResetResult.success {
+        os_log(
+          "Unable to reset display %{public}@ to default resolution from display prefs reset: %{public}@",
+          type: .error,
+          String(disp.identifier),
+          resolutionResetResult.error ?? "unknown error"
+        )
+      }
     }
   }
 }

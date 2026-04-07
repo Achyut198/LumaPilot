@@ -33,11 +33,12 @@
 
 ## 💾 Installation
 
-Download from Releases:
+Download latest build:
 
-- [v0.1.0 DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg)
-- [v0.1.0 SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg.sha256)
-- [Releases page](https://github.com/Achyut198/LumaPilot/releases)
+- [Latest DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg)
+- [Latest SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256)
+- [Latest release page](https://github.com/Achyut198/LumaPilot/releases/latest)
+- [All releases](https://github.com/Achyut198/LumaPilot/releases)
 
 Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
@@ -46,7 +47,7 @@ Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 You can also install LumaPilot using a single command:
 
 ```bash
-curl -L -o /tmp/LumaPilot.dmg https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg && \
+curl -L -o /tmp/LumaPilot.dmg https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg && \
 hdiutil attach /tmp/LumaPilot.dmg -nobrowse && \
 cp -R "/Volumes/LumaPilot Installer/LumaPilot.app" /Applications/ && \
 hdiutil detach "/Volumes/LumaPilot Installer" && \
@@ -112,7 +113,7 @@ Set these GitHub Actions secrets:
 - `APPLE_APP_SPECIFIC_PASSWORD`
 - `DEVELOPER_ID_APP_IDENTITY` (exact `codesign` identity string)
 
-Then push a tag like `v0.1.1`; the workflow will build, notarize, staple, and upload `.dmg` + `.sha256` to the matching GitHub Release.
+Then push a tag like `v4.3.3`; the workflow will build, notarize, staple, and upload `.dmg` + `.sha256` to the matching GitHub Release.
 
 ## 📄 Credits
 
