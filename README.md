@@ -25,9 +25,9 @@
 
 Download from Releases:
 
-- [Latest release page](https://github.com/Achyut198/LumaPilot/releases/latest)
-- [v0.1.0 DMG](https://github.com/Achyut198/LumaPilot/releases/download/v0.1.0/LumaPilot-v0.1.0-macOS.dmg)
-- [v0.1.0 SHA-256](https://github.com/Achyut198/LumaPilot/releases/download/v0.1.0/LumaPilot-v0.1.0-macOS.dmg.sha256)
+- [v0.1.0 DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg)
+- [v0.1.0 SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg.sha256)
+- [Releases page](https://github.com/Achyut198/LumaPilot/releases)
 
 Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
