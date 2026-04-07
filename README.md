@@ -48,8 +48,13 @@ You can also install LumaPilot using a single command:
 
 ```bash
 curl -L -o /tmp/LumaPilot.dmg https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg && \
+curl -L -o /tmp/LumaPilot.dmg.sha256 https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256 && \
+EXPECTED="$(awk '{print $1}' /tmp/LumaPilot.dmg.sha256)" && \
+ACTUAL="$(shasum -a 256 /tmp/LumaPilot.dmg | awk '{print $1}')" && \
+[ "$EXPECTED" = "$ACTUAL" ] && \
 MOUNT="$(hdiutil attach /tmp/LumaPilot.dmg -nobrowse | awk '/\/Volumes\// {print substr($0, index($0, "/Volumes/")); exit}')" && \
-cp -R "$MOUNT/LumaPilot.app" /Applications/ && \
+rm -rf /Applications/LumaPilot.app && \
+rsync -a --delete "$MOUNT/LumaPilot.app/" "/Applications/LumaPilot.app/" && \
 hdiutil detach "$MOUNT" && \
 xattr -dr com.apple.quarantine /Applications/LumaPilot.app && \
 open /Applications/LumaPilot.app
