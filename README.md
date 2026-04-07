@@ -23,12 +23,25 @@
 
 ## 💾 Installation
 
-Download the latest DMG:
+Download from Releases:
 
-- [LumaPilot v0.1.0 DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg)
-- [SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-v0.1.0-macOS.dmg.sha256)
+- [Latest release page](https://github.com/Achyut198/LumaPilot/releases/latest)
+- [v0.1.0 DMG](https://github.com/Achyut198/LumaPilot/releases/download/v0.1.0/LumaPilot-v0.1.0-macOS.dmg)
+- [v0.1.0 SHA-256](https://github.com/Achyut198/LumaPilot/releases/download/v0.1.0/LumaPilot-v0.1.0-macOS.dmg.sha256)
 
 Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
+
+## 🔐 Gatekeeper & Safety
+
+If macOS shows **"Apple could not verify ... malware"**, the app is not notarized yet.
+To avoid this for users, releases should be:
+1. Signed with **Developer ID Application** certificate
+2. Notarized with Apple `notarytool`
+3. Stapled (`xcrun stapler staple`) before publishing
+
+This repository includes:
+- `scripts/macos_notarized_release.sh` for local notarized DMG builds
+- `.github/workflows/release-notarized-dmg.yml` for tag-based CI release uploads
 
 ## 🛠 Usage Instructions
 
@@ -52,6 +65,19 @@ Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
    ```
 2. **Open the project:** Open `LumaPilot.xcodeproj` in Xcode.
 3. **Build:** Dependencies resolve automatically via Swift Package Manager.
+
+### Notarized Release (Maintainers)
+
+Set these GitHub Actions secrets:
+- `BUILD_CERTIFICATE_BASE64` (Developer ID Application .p12, base64 encoded)
+- `P12_PASSWORD`
+- `KEYCHAIN_PASSWORD`
+- `APPLE_ID`
+- `APPLE_TEAM_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `DEVELOPER_ID_APP_IDENTITY` (exact `codesign` identity string)
+
+Then push a tag like `v0.1.1`; the workflow will build, notarize, staple, and upload `.dmg` + `.sha256` to the matching GitHub Release.
 
 ## 📄 Credits
 
