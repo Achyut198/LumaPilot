@@ -43,6 +43,15 @@
 /* Shown in the alert dialog */
 "Enable Longer Delay?" = "Enable Longer Delay?";
 
+/* Shown in the alert dialog */
+"Update failed to start" = "Update failed to start";
+
+/* Shown in the alert dialog */
+"Updating LumaPilot" = "Updating LumaPilot";
+
+/* Shown in the alert dialog */
+"Latest version is downloading and will be installed now. LumaPilot will restart automatically." = "Latest version is downloading and will be installed now. LumaPilot will restart automatically.";
+
 /* Shown in the Display Settings */
 "External Display" = "External Display";
 

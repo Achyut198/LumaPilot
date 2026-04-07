@@ -29,6 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   var startupActionWriteCounter: Int = 0
   var audioPlayer: AVAudioPlayer?
   let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: UpdaterDelegate(), userDriverDelegate: nil)
+  private let latestDmgURL = "https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg"
+  private let latestShaURL = "https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256"
 
   var settingsPaneStyle: Settings.Style {
     if !DEBUG_MACOS10, #available(macOS 11.0, *) {
@@ -79,6 +81,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc func prefsClicked(_: AnyObject) {
     os_log("Settings clicked", type: .info)
     self.settingsWindowController.show()
+  }
+
+  @objc func checkForUpdatesClicked(_: AnyObject) {
+    os_log("Check for updates clicked", type: .info)
+    menu.closeMenu()
+
+    do {
+      try self.launchCommandLineUpdater()
+      let alert = NSAlert()
+      alert.messageText = NSLocalizedString("Updating LumaPilot", comment: "Shown in the alert dialog")
+      alert.informativeText = NSLocalizedString("Latest version is downloading and will be installed now. LumaPilot will restart automatically.", comment: "Shown in the alert dialog")
+      alert.runModal()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        NSApplication.shared.terminate(self)
+      }
+    } catch {
+      let alert = NSAlert()
+      alert.messageText = NSLocalizedString("Update failed to start", comment: "Shown in the alert dialog")
+      alert.informativeText = error.localizedDescription
+      alert.runModal()
+    }
   }
 
   func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
@@ -396,5 +419,64 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     statusItemVisibilityChangedByUser = false
     statusItem.isVisible = visible
     statusItemVisibilityChangedByUser = true
+  }
+
+  private func launchCommandLineUpdater() throws {
+    let destinationAppPath = Bundle.main.bundlePath
+    let scriptPath = "/tmp/lumapilot-self-update-\(UUID().uuidString).sh"
+    let script = """
+#!/bin/zsh
+set -euo pipefail
+
+DEST_APP=\(self.shellEscape(destinationAppPath))
+LATEST_DMG_URL=\(self.shellEscape(self.latestDmgURL))
+LATEST_SHA_URL=\(self.shellEscape(self.latestShaURL))
+TMP_DMG="$(mktemp /tmp/LumaPilotUpdate.XXXXXX.dmg)"
+TMP_SHA="$(mktemp /tmp/LumaPilotUpdate.XXXXXX.sha256)"
+STAGE_DIR="$(mktemp -d /tmp/LumaPilotUpdateStage.XXXXXX)"
+MOUNT=""
+
+cleanup() {
+  if [ -n "$MOUNT" ]; then
+    hdiutil detach "$MOUNT" >/dev/null 2>&1 || hdiutil detach -force "$MOUNT" >/dev/null 2>&1 || true
+  fi
+  rm -f "$TMP_DMG" "$TMP_SHA"
+  rm -rf "$STAGE_DIR"
+  rm -f \(self.shellEscape(scriptPath))
+}
+trap cleanup EXIT
+
+if [ ! -w "$(dirname "$DEST_APP")" ]; then
+  exit 1
+fi
+
+curl -fsSL -o "$TMP_DMG" "$LATEST_DMG_URL"
+curl -fsSL -o "$TMP_SHA" "$LATEST_SHA_URL"
+
+EXPECTED="$(awk '{print $1}' "$TMP_SHA")"
+ACTUAL="$(shasum -a 256 "$TMP_DMG" | awk '{print $1}')"
+[ "$EXPECTED" = "$ACTUAL" ]
+
+MOUNT="$(hdiutil attach "$TMP_DMG" -nobrowse | awk '/\\/Volumes\\// {print substr($0, index($0, "/Volumes/")); exit}')"
+rsync -a --delete "$MOUNT/LumaPilot.app/" "$STAGE_DIR/LumaPilot.app/"
+xattr -dr com.apple.quarantine "$STAGE_DIR/LumaPilot.app" || true
+
+sleep 1
+rm -rf "$DEST_APP"
+mv "$STAGE_DIR/LumaPilot.app" "$DEST_APP"
+open "$DEST_APP"
+"""
+
+    try script.write(toFile: scriptPath, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptPath)
+
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+    process.arguments = [scriptPath]
+    try process.run()
+  }
+
+  private func shellEscape(_ text: String) -> String {
+    "'" + text.replacingOccurrences(of: "'", with: "'\"'\"'") + "'"
   }
 }
