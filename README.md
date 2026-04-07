@@ -42,7 +42,7 @@ Download latest build:
 
 Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
-### Install via Command Line
+### Install via Command Line (Recommended)
 
 You can also install LumaPilot using a single command:
 
