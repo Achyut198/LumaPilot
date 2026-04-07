@@ -59,6 +59,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ github.ref_name }}
         run: |
+          if [ -f "RELEASES/${VERSION}.md" ]; then
+            gh release create "$VERSION" \
+              --title "LumaPilot ${VERSION}" \
+              --notes-file "RELEASES/${VERSION}.md" || true
+          else
+            gh release create "$VERSION" \
+              --title "LumaPilot ${VERSION}" \
+              --notes "Automated notarized release ${VERSION}" || true
+          fi
+
           gh release upload "$VERSION" \
             "dist/LumaPilot-${VERSION}-macOS.dmg" \
             "dist/LumaPilot-${VERSION}-macOS.dmg.sha256" \
