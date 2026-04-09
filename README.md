@@ -35,19 +35,20 @@
 
 Download latest build:
 
-- [Download from Releases](https://github.com/Achyut198/LumaPilot/releases/latest)
+- [Latest DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg)
+- [Latest SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256)
+- [Latest release page](https://github.com/Achyut198/LumaPilot/releases/latest)
 - [All releases](https://github.com/Achyut198/LumaPilot/releases)
 
-Then download the `.dmg` from the releases page and drag **LumaPilot.app** into **Applications**.
+Then open the `.dmg` and drag **LumaPilot.app** into **Applications**.
 
 ### Install via Command Line (Recommended)
 
 You can also install LumaPilot using a single command:
 
 ```bash
-LATEST_TAG=$(curl -sL https://api.github.com/repos/Achyut198/LumaPilot/tags | grep '"name":' | head -n 1 | awk -F '"' '{print $4}') && \
-curl -L -o /tmp/LumaPilot.dmg "https://github.com/Achyut198/LumaPilot/releases/download/${LATEST_TAG}/LumaPilot-${LATEST_TAG}-macOS.dmg" && \
-curl -L -o /tmp/LumaPilot.dmg.sha256 "https://github.com/Achyut198/LumaPilot/releases/download/${LATEST_TAG}/LumaPilot-${LATEST_TAG}-macOS.dmg.sha256" && \
+curl -L -o /tmp/LumaPilot.dmg https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg && \
+curl -L -o /tmp/LumaPilot.dmg.sha256 https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256 && \
 EXPECTED="$(awk '{print $1}' /tmp/LumaPilot.dmg.sha256)" && \
 ACTUAL="$(shasum -a 256 /tmp/LumaPilot.dmg | awk '{print $1}')" && \
 [ "$EXPECTED" = "$ACTUAL" ] && \
