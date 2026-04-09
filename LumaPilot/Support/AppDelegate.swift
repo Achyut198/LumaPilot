@@ -329,9 +329,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     do {
       if enabled {
-        try SMAppService.mainApp.register()
+        if SMAppService.mainApp.status != .enabled {
+          try SMAppService.mainApp.register()
+        }
       } else {
-        try SMAppService.mainApp.unregister()
+        if SMAppService.mainApp.status == .enabled {
+          try SMAppService.mainApp.unregister()
+        }
       }
       os_log("Start at login updated to %{public}@", type: .info, String(enabled))
     } catch {

@@ -10,7 +10,29 @@ class DisplayManager {
   typealias CGSConfigureDisplayEnabledFunction = @convention(c) (CGDisplayConfigRef?, CGDirectDisplayID, Bool) -> Int32
 
   var displays: [Display] = []
-  var knownDisplays: [CGDirectDisplayID: String] = [:]
+  private let knownDisplaysPrefKey = "KnownDisplays"
+  var knownDisplays: [CGDirectDisplayID: String] = [:] {
+    didSet {
+      var dictToSave: [String: String] = [:]
+      for (key, value) in knownDisplays {
+        dictToSave[String(key)] = value
+      }
+      prefs.set(dictToSave, forKey: knownDisplaysPrefKey)
+    }
+  }
+
+  func loadKnownDisplays() {
+    if let saved = prefs.dictionary(forKey: knownDisplaysPrefKey) as? [String: String] {
+      var restored: [CGDirectDisplayID: String] = [:]
+      for (key, value) in saved {
+        if let id = CGDirectDisplayID(key) {
+          restored[id] = value
+        }
+      }
+      self.knownDisplays = restored
+    }
+  }
+  
   var audioControlTargetDisplays: [OtherDisplay] = []
   let globalDDCQueue = DispatchQueue(label: "Global DDC queue")
   let gammaActivityEnforcer = NSWindow(contentRect: .init(origin: NSPoint(x: 0, y: 0), size: .init(width: DEBUG_GAMMA_ENFORCER ? 15 : 1, height: DEBUG_GAMMA_ENFORCER ? 15 : 1)), styleMask: [], backing: .buffered, defer: false)
@@ -25,7 +47,7 @@ class DisplayManager {
     self.gammaActivityEnforcer.ignoresMouseEvents = true
     self.gammaActivityEnforcer.level = .screenSaver
     self.gammaActivityEnforcer.orderFrontRegardless()
-    self.gammaActivityEnforcer.collectionBehavior = [.stationary, .canJoinAllSpaces]
+    self.gammaActivityEnforcer.collectionBehavior = [.stationary, .canJoinAllSpaces, .fullScreenAuxiliary]
     os_log("Gamma activity enforcer created.", type: .info)
   }
 
@@ -74,7 +96,7 @@ class DisplayManager {
       shade.ignoresMouseEvents = true
       shade.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
       shade.orderFrontRegardless()
-      shade.collectionBehavior = [.stationary, .canJoinAllSpaces, .ignoresCycle]
+      shade.collectionBehavior = [.stationary, .canJoinAllSpaces, .ignoresCycle, .fullScreenAuxiliary]
       shade.setFrame(screen.frame, display: true)
       shade.contentView?.wantsLayer = true
       shade.contentView?.alphaValue = 0.0
@@ -164,6 +186,7 @@ class DisplayManager {
   }
 
   func configureDisplays() {
+    self.loadKnownDisplays()
     self.clearDisplays()
     var onlineDisplayIDs = [CGDirectDisplayID](repeating: 0, count: 16)
     var displayCount: UInt32 = 0
@@ -348,7 +371,13 @@ class DisplayManager {
   func getKnownDisabledDisplays() -> [(id: CGDirectDisplayID, name: String)] {
     let onlineDisplayIDs = Set(self.getOnlineDisplayIDs())
     var disabledDisplays: [(id: CGDirectDisplayID, name: String)] = []
-    for (id, name) in self.knownDisplays where !onlineDisplayIDs.contains(id) {
+    
+    var tempKnown = self.knownDisplays
+    if tempKnown[1] == nil && !onlineDisplayIDs.contains(1) {
+      tempKnown[1] = "Built-in Display"
+    }
+
+    for (id, name) in tempKnown where !onlineDisplayIDs.contains(id) {
       disabledDisplays.append((id, name))
     }
     return disabledDisplays.sorted { lhs, rhs in

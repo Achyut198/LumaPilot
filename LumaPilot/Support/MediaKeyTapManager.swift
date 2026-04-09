@@ -214,7 +214,7 @@ class MediaKeyTapManager: MediaKeyTapDelegate {
   }
 
   static func readPrivileges(prompt: Bool) -> Bool {
-    let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as NSString: prompt]
+    let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as NSString: prompt]
     let status = AXIsProcessTrustedWithOptions(options)
     os_log("Reading Accessibility privileges - Current access status %{public}@", type: .info, String(status))
     return status
