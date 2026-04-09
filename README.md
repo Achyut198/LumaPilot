@@ -11,6 +11,17 @@
 
 <hr>
 
+## 🌟 About LumaPilot
+
+LumaPilot is proudly built upon the incredible open-source foundation of [MonitorControl](https://github.com/MonitorControl/MonitorControl), combining its robust hardware-level DDC architecture with critical modern enhancements specially designed for stability in professional macOS environments. 
+
+**Exclusive LumaPilot Additions:**
+* **Persistent Display Tracking:** Rebuilt the `DisplayManager` engine to permanently memorize disabled monitors—even after entirely rebooting your Mac.
+* **Robust Login Auto-Start:** Integrated rigorous `SMAppService` validation hooks to permanently eliminate silent background crashes that plagued standard macOS Auto-Start capabilities.
+* **Full-Screen Space Overlays:** Forced LumaPilot's software dimming (`shade`) to dynamically persist continuously across all active full-screen virtual spaces—your dimming no longer gets accidentally deactivated by full-screen Safari/YouTube windows!
+* **HiDPI Retina Tagging:** Programmatically filters system graphics configurations and explicitly identifies true `(HiDPI)` modes within your resolution list, preventing unintended clarity and fuzziness degradation.
+* **Resilient Privilege Check:** Solved persistent accessibility permission loops caused by native macOS TCC cached binary miscounts.
+
 ## 🚀 Key Features
 
 * **Brightness & Volume Control**: Adjust your external and internal display's brightness, volume, and contrast seamlessly.
