@@ -117,6 +117,11 @@ class MenuHandler: NSMenu, NSMenuDelegate {
   func addDisplayMenuBlock(display: Display, addedSliderHandlers: [SliderHandler], blockName: String, monitorSubMenu: NSMenu, numOfDisplays: Int, asSubMenu: Bool) {
     if numOfDisplays > 1, prefs.integer(forKey: PrefKey.multiSliders.rawValue) != MultiSliders.relevant.rawValue, !DEBUG_MACOS10, #available(macOS 11.0, *) {
       class BlockView: NSView {
+        override func hitTest(_ point: NSPoint) -> NSView? {
+          let hit = super.hitTest(point)
+          if hit == self { return nil }
+          return hit
+        }
         override func draw(_: NSRect) {
           let radius = prefs.bool(forKey: PrefKey.showTickMarks.rawValue) ? CGFloat(4) : CGFloat(11)
           let outerMargin = CGFloat(15)
@@ -288,16 +293,31 @@ class MenuHandler: NSMenu, NSMenuDelegate {
   }
 
   private func resolutionMenuTitle(for mode: CGDisplayMode, isDefault: Bool) -> String {
-    let refreshRate = mode.refreshRate
-    let suffix = isDefault ? " (\(NSLocalizedString("Default", comment: "Shown in menu")))" : ""
-    if refreshRate > 1 {
-      return "\(mode.width)x\(mode.height) @ \(Int(round(refreshRate)))Hz\(suffix)"
+    let width = mode.width
+    let height = mode.height
+    let pixelWidth = mode.pixelWidth
+    let refreshRate = String(format: "%.0f", mode.refreshRate)
+    var title = "\(width) x \(height) @ \(refreshRate)Hz"
+    if pixelWidth > width {
+      title += " (HiDPI)"
     }
-    return "\(mode.width)x\(mode.height)\(suffix)"
+    if isDefault {
+      title += " " + NSLocalizedString("(Default)", comment: "Shown in menu")
+    }
+    return title
   }
 
   @objc private func displayResolutionSelected(_ sender: NSMenuItem) {
     guard let payload = sender.representedObject as? ResolutionMenuItemPayload else {
+      return
+    }
+    let alert = NSAlert()
+    alert.messageText = NSLocalizedString("Changing Resolution", comment: "Shown in the alert dialog")
+    alert.informativeText = NSLocalizedString("Are you sure you want to change the display resolution? Some displays may flicker or fail to render the new configuration.", comment: "Shown in the alert dialog")
+    alert.alertStyle = .warning
+    alert.addButton(withTitle: NSLocalizedString("Change", comment: "Shown in the alert dialog"))
+    alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Shown in the alert dialog"))
+    if alert.runModal() != .alertFirstButtonReturn {
       return
     }
     let result = DisplayManager.shared.setDisplayResolution(payload.displayID, ioDisplayModeID: payload.ioDisplayModeID)

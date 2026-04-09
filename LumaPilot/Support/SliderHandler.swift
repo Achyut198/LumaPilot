@@ -237,6 +237,14 @@ class SliderHandler {
     }
   }
 
+  class SliderContainerView: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+      let hit = super.hitTest(point)
+      if hit == self { return nil }
+      return hit
+    }
+  }
+
   public init(display: Display?, command: Command, title: String = "", position _: Int = 0) {
     self.command = command
     self.title = title
@@ -253,7 +261,7 @@ class SliderHandler {
       let sliderRightPadding: CGFloat = 15
       slider.frame.size.width = 210 - sliderLeftPadding - sliderRightPadding
       slider.frame.origin = NSPoint(x: sliderLeftPadding, y: 5)
-      let view = NSView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + sliderLeftPadding + sliderRightPadding + (showPercent ? 38 : 0), height: slider.frame.height + 14))
+      let view = SliderHandler.SliderContainerView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + sliderLeftPadding + sliderRightPadding + (showPercent ? 38 : 0), height: slider.frame.height + 14))
       view.frame.origin = NSPoint(x: 12, y: 0)
       var iconName = "circle.dashed"
       switch command {
@@ -280,7 +288,7 @@ class SliderHandler {
     } else {
       slider.frame.size.width = 180
       slider.frame.origin = NSPoint(x: 15, y: 5)
-      let view = NSView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + 30 + (showPercent ? 38 : 0), height: slider.frame.height + 10))
+      let view = SliderHandler.SliderContainerView(frame: NSRect(x: 0, y: 0, width: slider.frame.width + 30 + (showPercent ? 38 : 0), height: slider.frame.height + 10))
       view.addSubview(slider)
       if showPercent {
         let percentageBox = NSTextField(frame: NSRect(x: 15 + slider.frame.size.width - 2, y: 18, width: 40, height: 12))
