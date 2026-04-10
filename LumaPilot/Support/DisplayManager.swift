@@ -382,6 +382,17 @@ class DisplayManager {
     }
   }
 
+  func clearKnownDisabledDisplays() {
+    let onlineDisplayIDs = Set(self.getOnlineDisplayIDs())
+    var tempKnown = self.knownDisplays
+    var removedCount = 0
+    for (id, _) in tempKnown where !onlineDisplayIDs.contains(id) {
+      self.knownDisplays.removeValue(forKey: id)
+      removedCount += 1
+    }
+    os_log("Cleared %{public}d known disabled displays.", type: .info, removedCount)
+  }
+
   func setDisplayEnabled(_ displayID: CGDirectDisplayID, enabled: Bool) -> (success: Bool, error: String?) {
     if !enabled, !self.canDisableDisplay(displayID) {
       return (false, NSLocalizedString("At least one display must stay enabled.", comment: "Shown in the alert dialog"))
@@ -424,7 +435,13 @@ class DisplayManager {
       os_log("CGCompleteDisplayConfiguration failed for option %{public}@ (%{public}d)", type: .error, option == .permanently ? "permanently" : "forSession", completeResult.rawValue)
     }
 
-    return (false, String(format: NSLocalizedString("Display reconfiguration failed (%d). Try changing arrangement in System Settings > Displays, then retry.", comment: "Shown in the alert dialog"), lastCompleteError?.rawValue ?? -1))
+    let errCode = lastCompleteError?.rawValue ?? -1
+    if enabled, errCode == 1001 {
+      self.knownDisplays.removeValue(forKey: displayID)
+      return (false, NSLocalizedString("Ghost monitor detected and removed. The display ID is no longer valid. Please reopen the menu.", comment: "Shown in the alert dialog"))
+    }
+
+    return (false, String(format: NSLocalizedString("Display reconfiguration failed (%d). Try changing arrangement in System Settings > Displays, then retry.", comment: "Shown in the alert dialog"), errCode))
   }
 
   func setDisplayResolution(_ displayID: CGDirectDisplayID, ioDisplayModeID: Int32) -> (success: Bool, error: String?) {

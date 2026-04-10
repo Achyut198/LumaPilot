@@ -139,6 +139,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   @objc func displayReconfigured() {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      let activeDisplays = DisplayManager.shared.getActiveDisplayIDs()
+      if activeDisplays.isEmpty {
+        os_log("Failsafe triggered: 0 active displays after hardware disconnect. Rescuing known displays.", type: .info)
+        for (displayID, _) in DisplayManager.shared.knownDisplays {
+          _ = DisplayManager.shared.setDisplayEnabled(displayID, enabled: true)
+        }
+      }
+    }
+
     DisplayManager.shared.resetSwBrightnessForAllDisplays(noPrefSave: true)
     CGDisplayRestoreColorSyncSettings()
     self.reconfigureID += 1
@@ -159,6 +169,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       return
     }
     os_log("Request for configuration with reconfigreID %{public}@", type: .info, String(dispatchedReconfigureID))
+
     self.reconfigureID = 0
     DisplayManager.shared.gammaInterferenceCounter = 0
     DisplayManager.shared.configureDisplays()

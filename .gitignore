@@ -8,3 +8,4 @@ Carthage
 xcuserdata/
 /build
 /build_output
+/build_output_release
