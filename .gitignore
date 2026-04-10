@@ -7,3 +7,4 @@ Carthage
 ### Xcode ###
 xcuserdata/
 /build
+/build_output

@@ -373,9 +373,6 @@ class DisplayManager {
     var disabledDisplays: [(id: CGDirectDisplayID, name: String)] = []
     
     var tempKnown = self.knownDisplays
-    if tempKnown[1] == nil && !onlineDisplayIDs.contains(1) {
-      tempKnown[1] = "Built-in Display"
-    }
 
     for (id, name) in tempKnown where !onlineDisplayIDs.contains(id) {
       disabledDisplays.append((id, name))
