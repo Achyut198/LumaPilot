@@ -42,6 +42,11 @@ class KeyboardShortcutsManager {
     KeyboardShortcuts.onKeyDown(for: .displayOn) { [self] in
       self.displayPower(enable: true)
     }
+    for (displayIndex, shortcut) in KeyboardShortcuts.Name.displayToggleShortcuts.enumerated() {
+      KeyboardShortcuts.onKeyDown(for: shortcut) { [self] in
+        self.toggleDisplay(at: displayIndex)
+      }
+    }
     KeyboardShortcuts.onKeyUp(for: .brightnessUp) { [self] in
       self.disengage()
     }
@@ -186,6 +191,39 @@ class KeyboardShortcutsManager {
       return builtInDisplay.identifier
     }
     return nil
+  }
+
+  private func orderedToggleDisplays() -> [(id: CGDirectDisplayID, name: String, isActive: Bool)] {
+    let activeDisplays = DisplayManager.shared.sortDisplaysByFriendlyName().map { display -> (id: CGDirectDisplayID, name: String, isActive: Bool) in
+      let displayName = display.readPrefAsString(key: .friendlyName).isEmpty ? display.name : display.readPrefAsString(key: .friendlyName)
+      return (display.identifier, displayName, true)
+    }
+    let activeDisplayIDs = Set(activeDisplays.map { $0.id })
+    let disabledDisplays = DisplayManager.shared.getKnownDisabledDisplays()
+      .filter { !activeDisplayIDs.contains($0.id) }
+      .map { ($0.id, $0.name, false) }
+
+    return (activeDisplays + disabledDisplays).sorted {
+      $0.name.localizedStandardCompare($1.name) == .orderedDescending
+    }
+  }
+
+  private func toggleDisplay(at displayIndex: Int) {
+    guard app.sleepID == 0, app.reconfigureID == 0 else {
+      return
+    }
+    let displays = self.orderedToggleDisplays()
+    guard displays.indices.contains(displayIndex) else {
+      return
+    }
+    let display = displays[displayIndex]
+    let shouldEnable = !display.isActive
+    let result = DisplayManager.shared.setDisplayEnabled(display.id, enabled: shouldEnable)
+    if !result.success {
+      os_log("Display toggle shortcut failed for display %{public}@ (%{public}u): %{public}@", type: .error, display.name, display.id, result.error ?? "Unknown error")
+    } else {
+      app.updateMenusAndKeys()
+    }
   }
 
   private func displayPower(enable: Bool) {

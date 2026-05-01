@@ -400,10 +400,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     menu = MenuHandler()
     menu.delegate = menu
     if #available(macOS 11.0, *) {
-      self.statusItem.button?.image = NSImage(systemSymbolName: "dial.medium.fill", accessibilityDescription: "LumaPilot")
-      self.statusItem.button?.contentTintColor = NSColor(calibratedRed: 0.35, green: 0.82, blue: 1.00, alpha: 1)
+      let statusImage = NSImage(systemSymbolName: "dial.medium.fill", accessibilityDescription: "LumaPilot")
+      statusImage?.isTemplate = true
+      self.statusItem.button?.image = statusImage
+      self.statusItem.button?.contentTintColor = nil
     } else {
-      self.statusItem.button?.image = NSImage(named: "status")
+      let statusImage = NSImage(named: "status")
+      statusImage?.isTemplate = true
+      self.statusItem.button?.image = statusImage
     }
     self.statusItem.menu = menu
   }
