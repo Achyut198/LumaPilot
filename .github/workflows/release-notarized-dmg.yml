@@ -67,6 +67,13 @@ jobs:
           APP_PATH="build/Build/Products/Release/LumaPilot.app"
           STAGE_DIR="$RUNNER_TEMP/LumaPilotDMG"
           DIST_DIR="dist"
+          DMG_PATH="$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg"
+          CHECKSUM_PATH="$DMG_PATH.sha256"
+
+          if [ -f "$DMG_PATH" ]; then
+            shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
+            exit 0
+          fi
 
           xcodebuild \
             -project LumaPilot.xcodeproj \
@@ -89,9 +96,9 @@ jobs:
             -srcfolder "$STAGE_DIR" \
             -ov \
             -format UDZO \
-            "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg"
+            "$DMG_PATH"
 
-          shasum -a 256 "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg" > "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg.sha256"
+          shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
 
       - name: Upload DMG and checksum to GitHub Release
         env:
