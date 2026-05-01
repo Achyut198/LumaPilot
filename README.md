@@ -2,7 +2,7 @@
   <img src="LumaPilot/Assets.xcassets/AppIcon.appiconset/Icon-1024.png" width="200" alt="LumaPilot App icon"/>
   <h1>LumaPilot</h1>
   <p><b>Controls your external display brightness and volume and shows native OSD.</b></p>
-  <p>Use menubar extra sliders or the keyboard, and turn off / turn on displays (internal and external monitor feature).</p>
+  <p>Use menubar sliders, Apple media keys, or Option+number shortcuts to turn displays off and back on.</p>
   
   <a href="https://github.com/Achyut198/LumaPilot/releases"><img src="https://img.shields.io/github/downloads/Achyut198/LumaPilot/total.svg" alt="downloads"/></a>
   <a href="https://github.com/Achyut198/LumaPilot/releases"><img src="https://img.shields.io/github/release-pre/Achyut198/LumaPilot.svg" alt="latest version"/></a>
@@ -14,6 +14,13 @@
 ## 🌟 About LumaPilot
 
 LumaPilot is proudly built upon the incredible open-source foundation of [MonitorControl](https://github.com/MonitorControl/MonitorControl), combining its robust hardware-level DDC architecture with critical modern enhancements specially designed for stability in professional macOS environments. 
+
+## ✨ Latest Features
+
+* **Option+Number Display Toggles:** Use `Option+1`, `Option+2`, `Option+3`, and so on to toggle the matching monitor off or back on. `Option+0` maps to display 10.
+* **Stable Monitor Shortcut Mapping:** Disabled monitors stay in the shortcut list, so pressing the same shortcut can bring the same external display back instead of shifting to another display.
+* **Adaptive Menu Bar Icon:** The menu bar icon now follows macOS template rendering, appearing light on dark menu bars and dark on light menu bars.
+* **Updated Latest Build:** The current rolling DMG and GitHub Release are published as `v4.3.10`.
 
 **Exclusive LumaPilot Additions:**
 * **Persistent Display Tracking:** Rebuilt the `DisplayManager` engine to permanently memorize disabled monitors—even after entirely rebooting your Mac.
@@ -27,6 +34,7 @@ LumaPilot is proudly built upon the incredible open-source foundation of [Monito
 * **Brightness & Volume Control**: Adjust your external and internal display's brightness, volume, and contrast seamlessly.
 * **Native OSD Integration**: Displays the native Apple OSD for brightness and volume changes.
 * **Display Toggle**: Turn off and turn on displays (both internal and external monitors).
+* **Option+Number Shortcuts**: Toggle displays directly with `Option+1` through `Option+9`, plus `Option+0` for display 10.
 * **Keyboard & Menubar**: Control your displays via the unobtrusive menubar sliders or using standard Apple keyboard media keys.
 * **Automated Sync**: Synchronize brightness from built-in ambient light sensors across all external screens.
 * **Smooth Transitions**: Enjoy fluid, smooth brightness adjustments.
@@ -44,7 +52,7 @@ LumaPilot is proudly built upon the incredible open-source foundation of [Monito
 
 ## 💾 Installation
 
-Download latest build:
+Download the latest build (`v4.3.10` or newer):
 
 - [Latest DMG](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg)
 - [Latest SHA-256](https://raw.githubusercontent.com/Achyut198/LumaPilot/main/dist/LumaPilot-latest-macOS.dmg.sha256)
@@ -100,7 +108,8 @@ This repository includes:
 1. Launch **LumaPilot** from your Applications folder.
 2. Grant **Accessibility Permissions** (System Settings » Privacy & Security) to enable native keyboard shortcuts interactions.
 3. Access control sliders from the menubar brightness icon at the top of your screen.
-4. Explore **Settings** for deeper customization regarding external display behaviors.
+4. Use `Option+1`, `Option+2`, `Option+3`, etc. to toggle monitors off and on by their display order.
+5. Explore **Settings** for deeper customization regarding external display behaviors.
 
 ## 💻 Compatibility & Requirements
 
