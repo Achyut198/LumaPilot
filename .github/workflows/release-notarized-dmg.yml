@@ -10,6 +10,8 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+    env:
+      HAS_NOTARIZATION_SECRETS: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' && secrets.P12_PASSWORD != '' && secrets.KEYCHAIN_PASSWORD != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.DEVELOPER_ID_APP_IDENTITY != '' }}
 
     steps:
       - name: Checkout
@@ -19,6 +21,7 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
       - name: Prepare keychain and import Developer ID cert
+        if: env.HAS_NOTARIZATION_SECRETS == 'true'
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -35,6 +38,7 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN_PATH"
 
       - name: Configure notarytool profile
+        if: env.HAS_NOTARIZATION_SECRETS == 'true'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -46,6 +50,7 @@ jobs:
             --password "$APPLE_APP_SPECIFIC_PASSWORD"
 
       - name: Build notarized DMG
+        if: env.HAS_NOTARIZATION_SECRETS == 'true'
         env:
           VERSION: ${{ github.ref_name }}
           DEVELOPER_ID_APP: ${{ secrets.DEVELOPER_ID_APP_IDENTITY }}
@@ -53,6 +58,40 @@ jobs:
         run: |
           chmod +x ./scripts/macos_notarized_release.sh
           ./scripts/macos_notarized_release.sh
+
+      - name: Build unsigned DMG fallback
+        if: env.HAS_NOTARIZATION_SECRETS != 'true'
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          APP_PATH="build/Build/Products/Release/LumaPilot.app"
+          STAGE_DIR="$RUNNER_TEMP/LumaPilotDMG"
+          DIST_DIR="dist"
+
+          xcodebuild \
+            -project LumaPilot.xcodeproj \
+            -scheme LumaPilot \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build
+
+          codesign --force --deep --sign - --entitlements LumaPilot/LumaPilot.entitlements "$APP_PATH"
+
+          rm -rf "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR" "$DIST_DIR"
+          cp -R "$APP_PATH" "$STAGE_DIR/LumaPilot.app"
+          ln -s /Applications "$STAGE_DIR/Applications"
+
+          hdiutil create \
+            -volname "LumaPilot Installer" \
+            -srcfolder "$STAGE_DIR" \
+            -ov \
+            -format UDZO \
+            "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg"
+
+          shasum -a 256 "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg" > "$DIST_DIR/LumaPilot-${VERSION}-macOS.dmg.sha256"
 
       - name: Upload DMG and checksum to GitHub Release
         env:

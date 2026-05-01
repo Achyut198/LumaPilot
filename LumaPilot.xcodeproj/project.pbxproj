@@ -754,7 +754,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 4.3.8;
+				MARKETING_VERSION = 4.3.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.lumapilot.LumaPilot;
 				PRODUCT_NAME = LumaPilot;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -791,7 +791,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 4.3.8;
+				MARKETING_VERSION = 4.3.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.lumapilot.LumaPilot;
 				PRODUCT_NAME = LumaPilot;
 				PROVISIONING_PROFILE_SPECIFIER = "";
