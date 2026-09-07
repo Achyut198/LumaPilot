@@ -11,26 +11,92 @@ class DisplayManager {
 
   var displays: [Display] = []
   private let knownDisplaysPrefKey = "KnownDisplays"
-  var knownDisplays: [CGDirectDisplayID: String] = [:] {
+
+  /// A persisted reference to a display we have seen before. We keep the stable hardware
+  /// identity (vendor/model/serial) alongside the transient `CGDirectDisplayID` so that a
+  /// display can still be recognised after macOS reassigns its ID (sleep/wake, reconnect,
+  /// GPU switch, disable→enable), instead of being mistaken for a disconnected display.
+  struct KnownDisplay {
+    var name: String
+    var vendorNumber: UInt32
+    var modelNumber: UInt32
+    var serialNumber: UInt32
+    var isBuiltin: Bool = false
+
+    /// Stable key that survives `CGDirectDisplayID` reassignment.
+    var identityKey: String { "\(self.vendorNumber):\(self.modelNumber):\(self.serialNumber)" }
+
+    /// Whether this display exposes enough hardware info to be matched across ID changes.
+    /// Displays that report all-zero identity (some virtual/dummy/EDID-less panels) can only
+    /// be tracked by their transient ID.
+    var hasStableIdentity: Bool { self.vendorNumber != 0 || self.modelNumber != 0 || self.serialNumber != 0 }
+
+    /// A reference is only meaningful if it has a real name. Transient/invalid display IDs that
+    /// appear briefly during reconfiguration report an empty name (and garbage identity); such
+    /// phantom references must never be stored or shown as a disconnected display.
+    var isValid: Bool { !self.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+  }
+
+  var knownDisplays: [CGDirectDisplayID: KnownDisplay] = [:] {
     didSet {
-      var dictToSave: [String: String] = [:]
-      for (key, value) in knownDisplays {
-        dictToSave[String(key)] = value
+      var dictToSave: [String: [String: Any]] = [:]
+      for (key, value) in self.knownDisplays where value.isValid {
+        dictToSave[String(key)] = [
+          "name": value.name,
+          "vendorNumber": value.vendorNumber,
+          "modelNumber": value.modelNumber,
+          "serialNumber": value.serialNumber,
+          "isBuiltin": value.isBuiltin,
+        ]
       }
-      prefs.set(dictToSave, forKey: knownDisplaysPrefKey)
+      prefs.set(dictToSave, forKey: self.knownDisplaysPrefKey)
     }
   }
 
   func loadKnownDisplays() {
-    if let saved = prefs.dictionary(forKey: knownDisplaysPrefKey) as? [String: String] {
-      var restored: [CGDirectDisplayID: String] = [:]
-      for (key, value) in saved {
-        if let id = CGDirectDisplayID(key) {
-          restored[id] = value
-        }
-      }
-      self.knownDisplays = restored
+    guard let saved = prefs.dictionary(forKey: self.knownDisplaysPrefKey) else {
+      return
     }
+    var restored: [CGDirectDisplayID: KnownDisplay] = [:]
+    for (key, value) in saved {
+      guard let id = CGDirectDisplayID(key) else {
+        continue
+      }
+      if let dict = value as? [String: Any] {
+        // Current storage format with full hardware identity.
+        let entry = KnownDisplay(
+          name: dict["name"] as? String ?? "",
+          vendorNumber: (dict["vendorNumber"] as? NSNumber)?.uint32Value ?? 0,
+          modelNumber: (dict["modelNumber"] as? NSNumber)?.uint32Value ?? 0,
+          serialNumber: (dict["serialNumber"] as? NSNumber)?.uint32Value ?? 0,
+          isBuiltin: (dict["isBuiltin"] as? NSNumber)?.boolValue ?? false
+        )
+        // Drop phantom/invalid references (e.g. empty-name transients) instead of restoring them.
+        if entry.isValid {
+          restored[id] = entry
+        }
+      } else if let name = value as? String, !name.isEmpty {
+        // Legacy storage format (id → name). Migrate; identity resolves next time it comes online.
+        restored[id] = KnownDisplay(name: name, vendorNumber: 0, modelNumber: 0, serialNumber: 0)
+      }
+    }
+    self.knownDisplays = restored
+  }
+
+  /// Builds a `KnownDisplay` reference for a currently-attached display ID.
+  static func makeKnownDisplay(displayID: CGDirectDisplayID) -> KnownDisplay {
+    KnownDisplay(
+      name: DisplayManager.getDisplayNameByID(displayID: displayID),
+      vendorNumber: CGDisplayVendorNumber(displayID),
+      modelNumber: CGDisplayModelNumber(displayID),
+      serialNumber: CGDisplaySerialNumber(displayID),
+      isBuiltin: CGDisplayIsBuiltin(displayID) != 0
+    )
+  }
+
+  /// Stable hardware identity key for a currently-attached display ID.
+  static func identityKey(displayID: CGDirectDisplayID) -> String {
+    "\(CGDisplayVendorNumber(displayID)):\(CGDisplayModelNumber(displayID)):\(CGDisplaySerialNumber(displayID))"
   }
   
   var audioControlTargetDisplays: [OtherDisplay] = []
@@ -197,10 +263,12 @@ class DisplayManager {
     for onlineDisplayID in onlineDisplayIDs where onlineDisplayID != 0 {
       let name = DisplayManager.getDisplayNameByID(displayID: onlineDisplayID)
       let id = onlineDisplayID
-      self.knownDisplays[id] = name
       let vendorNumber = CGDisplayVendorNumber(onlineDisplayID)
       let modelNumber = CGDisplayModelNumber(onlineDisplayID)
       let serialNumber = CGDisplaySerialNumber(onlineDisplayID)
+      // Record/refresh this display's reference. Drop any stale reference that points at the
+      // same physical panel under a different (reassigned) ID so it never lingers as "off".
+      self.reconcileKnownDisplay(id: id, name: name, vendorNumber: vendorNumber, modelNumber: modelNumber, serialNumber: serialNumber, isBuiltin: CGDisplayIsBuiltin(onlineDisplayID) != 0)
       let isDummy: Bool = DisplayManager.isDummy(displayID: onlineDisplayID)
       let isVirtual: Bool = DisplayManager.isVirtual(displayID: onlineDisplayID)
       if !DEBUG_SW, DisplayManager.isAppleDisplay(displayID: onlineDisplayID) { // MARK: (point of interest for testing)
@@ -368,34 +436,125 @@ class DisplayManager {
     return activeDisplayIDs.contains(displayID) && activeDisplayIDs.count > 1
   }
 
+  /// A known built-in (default) display that is currently offline, usable as a fallback so the
+  /// user is switched to their laptop screen when they turn off their only external display.
+  func offlineBuiltInFallbackID() -> CGDirectDisplayID? {
+    let onlineDisplayIDs = Set(self.getOnlineDisplayIDs())
+    for (id, info) in self.knownDisplays where info.isValid && !onlineDisplayIDs.contains(id) {
+      // `CGDisplayIsBuiltin` stays reliable for a disabled-but-attached built-in panel, so it
+      // backs up the stored flag (which older stored references may lack).
+      if info.isBuiltin || CGDisplayIsBuiltin(id) != 0 {
+        return id
+      }
+    }
+    return nil
+  }
+
+  /// Whether turning `displayID` off can be honoured — either another display stays active, or a
+  /// built-in fallback can be brought online in its place.
+  func canDisableDisplayWithFallback(_ displayID: CGDirectDisplayID) -> Bool {
+    if self.canDisableDisplay(displayID) {
+      return true
+    }
+    return self.isDisplayActive(displayID) && self.offlineBuiltInFallbackID() != nil
+  }
+
+  /// Records a currently-attached display and self-heals any stale references to the same
+  /// physical panel. When macOS reassigns a display's `CGDirectDisplayID`, the previous ID
+  /// would otherwise remain in `knownDisplays` and be reported as a disconnected display even
+  /// though the monitor is connected. Matching on the stable hardware identity removes it.
+  func reconcileKnownDisplay(id: CGDirectDisplayID, name: String, vendorNumber: UInt32, modelNumber: UInt32, serialNumber: UInt32, isBuiltin: Bool) {
+    let entry = KnownDisplay(name: name, vendorNumber: vendorNumber, modelNumber: modelNumber, serialNumber: serialNumber, isBuiltin: isBuiltin)
+    // Never track a phantom/invalid reference (transient ID with no real name).
+    guard entry.isValid else {
+      return
+    }
+    if entry.hasStableIdentity {
+      let identity = entry.identityKey
+      let onlineIDs = Set(self.getOnlineDisplayIDs())
+      let staleIDs = self.knownDisplays.compactMap { key, value -> CGDirectDisplayID? in
+        // Reclaim only a reference to the same hardware under a DIFFERENT id that is no longer
+        // online. A same-identity id that is itself online is a distinct identical-model monitor
+        // and must be kept.
+        key != id && value.hasStableIdentity && value.identityKey == identity && !onlineIDs.contains(key) ? key : nil
+      }
+      for staleID in staleIDs {
+        os_log("Reconciling stale display reference %{public}@ into current ID %{public}@ (same hardware).", type: .info, String(staleID), String(id))
+        self.knownDisplays.removeValue(forKey: staleID)
+      }
+    }
+    self.knownDisplays[id] = entry
+  }
+
   func getKnownDisabledDisplays() -> [(id: CGDirectDisplayID, name: String)] {
     let onlineDisplayIDs = Set(self.getOnlineDisplayIDs())
-    var disabledDisplays: [(id: CGDirectDisplayID, name: String)] = []
-    
-    var tempKnown = self.knownDisplays
-
-    for (id, name) in tempKnown where !onlineDisplayIDs.contains(id) {
-      disabledDisplays.append((id, name))
+    // Stable identities of everything currently online, under whatever ID macOS assigned.
+    var onlineIdentities = Set<String>()
+    for onlineID in onlineDisplayIDs {
+      onlineIdentities.insert(DisplayManager.identityKey(displayID: onlineID))
     }
+
+    var disabledDisplays: [(id: CGDirectDisplayID, name: String)] = []
+    var staleIDsToDrop: [CGDirectDisplayID] = []
+    var seenIdentities = Set<String>()
+
+    for (id, info) in self.knownDisplays where !onlineDisplayIDs.contains(id) {
+      // Drop phantom/invalid references (empty-name transients) so they never render as a
+      // nameless "ghost" row or pollute the toggle ordering used by keyboard shortcuts.
+      guard info.isValid else {
+        staleIDsToDrop.append(id)
+        continue
+      }
+      // If the same physical display is online under a different ID, it is connected, not off.
+      // Drop the stale reference so it stops appearing as disconnected.
+      if info.hasStableIdentity, onlineIdentities.contains(info.identityKey) {
+        staleIDsToDrop.append(id)
+        continue
+      }
+      // Collapse duplicate references to the same physical panel (e.g. leftover ghosts) so a
+      // disconnected display is listed only once.
+      if info.hasStableIdentity {
+        if seenIdentities.contains(info.identityKey) {
+          staleIDsToDrop.append(id)
+          continue
+        }
+        seenIdentities.insert(info.identityKey)
+      }
+      disabledDisplays.append((id, info.name))
+    }
+
+    // Self-heal persisted state (replaces the old manual "clear disconnected displays" action).
+    for staleID in staleIDsToDrop {
+      self.knownDisplays.removeValue(forKey: staleID)
+    }
+
     return disabledDisplays.sorted { lhs, rhs in
       lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
     }
   }
 
-  func clearKnownDisabledDisplays() {
-    let onlineDisplayIDs = Set(self.getOnlineDisplayIDs())
-    var tempKnown = self.knownDisplays
-    var removedCount = 0
-    for (id, _) in tempKnown where !onlineDisplayIDs.contains(id) {
-      self.knownDisplays.removeValue(forKey: id)
-      removedCount += 1
-    }
-    os_log("Cleared %{public}d known disabled displays.", type: .info, removedCount)
-  }
-
   func setDisplayEnabled(_ displayID: CGDirectDisplayID, enabled: Bool) -> (success: Bool, error: String?) {
     if !enabled, !self.canDisableDisplay(displayID) {
-      return (false, NSLocalizedString("At least one display must stay enabled.", comment: "Shown in the alert dialog"))
+      // Turning off the only active display: switch to the built-in (default) display instead of
+      // refusing, so the user is never left with a black screen.
+      guard self.isDisplayActive(displayID), let fallbackID = self.offlineBuiltInFallbackID() else {
+        return (false, NSLocalizedString("At least one display must stay enabled.", comment: "Shown in the alert dialog"))
+      }
+      let fallbackResult = self.setDisplayEnabled(fallbackID, enabled: true)
+      guard fallbackResult.success, self.canDisableDisplay(displayID) else {
+        return (false, fallbackResult.error ?? NSLocalizedString("Could not switch to the built-in display. At least one display must stay enabled.", comment: "Shown in the alert dialog"))
+      }
+    }
+
+    // Record the display's stable identity BEFORE disabling it, while it is still online and its
+    // hardware info is readable. Otherwise a disabled display that was not already tracked (e.g.
+    // after a fresh launch or lost prefs) would become invisible in the menu and impossible to
+    // turn back on from the app.
+    if !enabled, self.knownDisplays[displayID] == nil {
+      let entry = DisplayManager.makeKnownDisplay(displayID: displayID)
+      if entry.isValid {
+        self.knownDisplays[displayID] = entry
+      }
     }
 
     guard let coreGraphicsHandle = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW) else {
@@ -425,7 +584,10 @@ class DisplayManager {
       let completeResult = CGCompleteDisplayConfiguration(displayConfigRef, option)
       if completeResult == .success {
         if enabled {
-          self.knownDisplays[displayID] = DisplayManager.getDisplayNameByID(displayID: displayID)
+          let entry = DisplayManager.makeKnownDisplay(displayID: displayID)
+          if entry.isValid {
+            self.knownDisplays[displayID] = entry
+          }
         }
         return (true, nil)
       }

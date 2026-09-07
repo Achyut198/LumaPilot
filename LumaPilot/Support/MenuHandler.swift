@@ -555,7 +555,7 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     }
 
     if !shouldEnable {
-      guard DisplayManager.shared.canDisableDisplay(displayID) else {
+      guard DisplayManager.shared.canDisableDisplayWithFallback(displayID) else {
         setSenderState(.on)
         let alert = NSAlert()
         alert.messageText = NSLocalizedString("Display cannot be disconnected", comment: "Shown in the alert dialog")
@@ -564,7 +564,7 @@ class MenuHandler: NSMenu, NSMenuDelegate {
         return
       }
 
-      let displayName = DisplayManager.shared.knownDisplays[displayID] ?? String(displayID)
+      let displayName = DisplayManager.shared.knownDisplays[displayID]?.name ?? DisplayManager.getDisplayNameByID(displayID: displayID)
       guard self.showDisableDisplayWarning(for: displayName) else {
         setSenderState(.on)
         return
@@ -593,43 +593,10 @@ class MenuHandler: NSMenu, NSMenuDelegate {
     }
   }
 
-  @objc private func clearDisconnectedDisplaysClicked(_ sender: Any) {
-    let alert = NSAlert()
-    alert.messageText = NSLocalizedString("Clear Disconnected Displays", comment: "Shown in the alert dialog")
-    alert.informativeText = NSLocalizedString("Are you sure you want to forget all currently disconnected displays? You will need to manually reconnect them to turn them back on from the menu.", comment: "Shown in the alert dialog")
-    alert.alertStyle = .warning
-    alert.addButton(withTitle: NSLocalizedString("Clear", comment: "Shown in the alert dialog"))
-    alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Shown in the alert dialog"))
-    if alert.runModal() == .alertFirstButtonReturn {
-      DisplayManager.shared.clearKnownDisabledDisplays()
-      self.updateMenus(dontClose: true)
-    }
-  }
-
   func addDefaultMenuOptions() {
     let disabledDisplays = DisplayManager.shared.getKnownDisabledDisplays()
-    if !disabledDisplays.isEmpty {
-      let clearItem = NSMenuItem(title: NSLocalizedString("Clear disconnected displays", comment: "Shown in menu"), action: #selector(self.clearDisconnectedDisplaysClicked(_:)), keyEquivalent: "")
-      clearItem.target = self
-      
-      let menuItemView = NSView(frame: NSRect(x: 0, y: 0, width: 252, height: 26))
-      let button = NSButton(frame: NSRect(x: 10, y: 5, width: 232, height: 16))
-      button.title = NSLocalizedString("Clear disconnected displays", comment: "Shown in menu")
-      button.isBordered = false
-      button.setButtonType(.momentaryChange)
-      button.alignment = .center
-      button.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
-      button.contentTintColor = NSColor.systemGray
-      button.target = self
-      button.action = #selector(self.clearDisconnectedDisplaysClicked(_:))
-      menuItemView.addSubview(button)
-      clearItem.view = menuItemView
-      
-      self.insertItem(clearItem, at: 0)
-
-      for disabledDisplay in disabledDisplays {
-        self.addDisabledDisplayToggleRow(displayID: disabledDisplay.id, name: disabledDisplay.name)
-      }
+    for disabledDisplay in disabledDisplays {
+      self.addDisabledDisplayToggleRow(displayID: disabledDisplay.id, name: disabledDisplay.name)
     }
 
     if !DEBUG_MACOS10, #available(macOS 11.0, *), prefs.integer(forKey: PrefKey.menuItemStyle.rawValue) == MenuItemStyle.icon.rawValue {
